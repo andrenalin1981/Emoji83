@@ -2,19 +2,19 @@
 
 @interface UIKeyboardEmojiCategory : NSObject {
 	int _categoryType;
-    NSArray *_emoji;
-    int _lastVisibleFirstEmojiIndex;
+	NSArray *_emoji;
+	int _lastVisibleFirstEmojiIndex;
 }
 @property int categoryType;
 @property(getter=displaySymbol,readonly) NSString *displaySymbol;
 @property(retain) NSArray *emoji;
 @property NSUInteger lastVisibleFirstEmojiIndex;
 @property(getter=name,readonly) NSString *name;
-@property(getter=recentDescription,readonly) NSString *recentDescription;
+@property(getter=recentDescription,readonly) NSString *recentDescription; // iOS 7+
 + (NSMutableArray *)categories;
 + (UIKeyboardEmojiCategory *)categoryForType:(int)type;
 + (NSArray *)emojiRecentsFromPreferences;
-+ (bool)hasVariantsForEmoji:(id)emoji;
++ (BOOL)hasVariantsForEmoji:(NSString *)emoji; // iOS 7+
 + (NSString *)localizedStringForKey:(NSString *)key;
 + (NSInteger)numberOfCategories;
 - (NSString *)displaySymbol;
@@ -22,14 +22,16 @@
 @end
 
 @interface UIKeyboardEmoji : NSObject {
-    NSString *_emojiString;
-    bool _hasDingbat;
+	NSString *_emojiString;
+	BOOL _hasDingbat;
 }
 @property(retain) NSString *emojiString;
-@property bool hasDingbat;
-+ (UIKeyboardEmoji *)emojiWithString:(NSString *)string hasDingbat:(bool)dingbat;
-- (id)initWithString:(NSString *)string hasDingbat:(bool)arg2;
-- (bool)isEqual:(UIKeyboardEmoji *)emoji;
+@property BOOL hasDingbat;
++ (UIKeyboardEmoji *)emojiWithString:(NSString *)string;
+- (id)initWithString:(NSString *)string;
++ (UIKeyboardEmoji *)emojiWithString:(NSString *)string hasDingbat:(BOOL)dingbat; // iOS 7+
+- (id)initWithString:(NSString *)string hasDingbat:(BOOL)dingbat; // iOS 7+
+- (BOOL)isEqual:(UIKeyboardEmoji *)emoji;
 - (NSString *)key; // emojiString
 @end
 
@@ -40,11 +42,12 @@ static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArr
 		NSMutableArray *array = [NSMutableArray array];
 		[array addObjectsFromArray:emoji];
 		for (NSString *myEmoji in myEmojis) {
-			UIKeyboardEmoji *emo = [%c(UIKeyboardEmoji) emojiWithString:myEmoji hasDingbat:dingbat];
+			UIKeyboardEmoji *emo = [NSClassFromString(@"UIKeyboardEmoji") respondsToSelector:@selector(emojiWithString:hasDingbat:)] ?
+									[NSClassFromString(@"UIKeyboardEmoji") emojiWithString:myEmoji hasDingbat:dingbat] :
+									[NSClassFromString(@"UIKeyboardEmoji") emojiWithString:myEmoji];
 			if (![array containsObject:emo]) {
-				if (emojiIndex != 0 && emojiIndex < array.count) {
+				if (emojiIndex != 0 && emojiIndex < array.count)
 					[array insertObject:emo atIndex:emojiIndex];
-				}
 				else
 					[array addObject:emo];
 			}
@@ -78,7 +81,7 @@ static void addFamilyEmojis(UIKeyboardEmojiCategory *emojiObject)
 
 static void updateCategory(UIKeyboardEmojiCategory *category, int type)
 {
-	[[%c(UIKeyboardEmojiCategory) categories] replaceObjectAtIndex:type withObject:category];
+	[[NSClassFromString(@"UIKeyboardEmojiCategory") categories] replaceObjectAtIndex:type withObject:category];
 }
 
 BOOL added1;
@@ -101,6 +104,13 @@ BOOL added4;
 		added4 = YES;
 	}
 	return category;
+}
+
+- (void)releaseCategories
+{
+	%orig;
+	added1 = NO;
+	added4 = NO;
 }
 
 %end

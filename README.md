@@ -13,4 +13,4 @@ Known Issues
 
 * Vulcan emoji (🖖) appears as an alien icon in certain apps.
 * The 14 new Family emojis don't combine themselves into one unit in certain apps.
-* Doesn't compatible with iOS <= 6 yet.
+* Extra emojis may be shown as black square crop instead on iOS <= 6 (From emoji selection page).
