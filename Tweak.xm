@@ -74,7 +74,7 @@
 - (id)initWithFrame:(CGRect)frame emoji:(UIKeyboardEmoji *)emoji;
 @end
 
-static NSString *skinToneUnicodeForFitzpatrickType(int type)
+/*static NSString *skinToneUnicodeForFitzpatrickType(int type)
 {
 	// References: http://emojipedia.org/skin-tone-modifiers/
 	// Define Type 1-2 as 2 here.
@@ -99,6 +99,16 @@ static NSString *skinToneUnicodeForFitzpatrickType(int type)
 	return format;
 }
 
+static BOOL isSkinTone(NSString *emoji)
+{
+	for (int type = 6; type >= 2; type--) {
+		NSString *skin = skinToneUnicodeForFitzpatrickType(type);
+		if ([skin isEqualToString:emoji])
+			return YES;
+	}
+	return NO;
+}
+
 static NSArray *diverseEmojisForEmojiString(NSString *emoji)
 {
 	NSMutableArray *emojis = [NSMutableArray arrayWithCapacity:5];
@@ -108,7 +118,7 @@ static NSArray *diverseEmojisForEmojiString(NSString *emoji)
 		[emojis addObject:diverseEmoji];
 	}
 	return emojis;
-}
+}*/
 
 Class $UIKeyboardEmoji;
 
@@ -171,16 +181,32 @@ static void addDiverseEmojis(UIKeyboardEmojiCategory *emojiObject)
 	[array addObjectsFromArray:emoji];
 	NSArray *diverseTargets = @[@"👦", @"👧", @"👨", @"👩", @"👮", @"👰", @"👱", @"👲", @"👳", @"👴", @"👵", @"👶", @"👷", @"👸", @"💂", @"👼", @"🎅", @"🙇", @"💁", @"🙅", @"🙆", @"🙋", @"🙎", @"🙍", @"💆", @"💇",
 								@"💅", @"👂", @"👃", @"👋", @"👍", @"👎", @"☝", @"👆", @"👇",@"👈", @"👉", @"👌", @"✌", @"👊", @"✊", @"✋", @"💪", @"👐", @"🙌", @"👏", @"🙏", @"🖖"];
-	for (NSString *diverseTarget in diverseTargets) {
-		NSArray *skinToneAppliedEmojis = diverseEmojisForEmojiString(diverseTarget);
-		for (NSString *diverse in skinToneAppliedEmojis) {
-			UIKeyboardEmoji *emo = emojiFromStringAndDingbat(diverse, YES);
-			for (UIKeyboardEmoji *originalEmo in emoji) {
-				if ([originalEmo.emojiString isEqualToString:diverseTarget]) {
-					NSUInteger indexOfTarget = [array indexOfObject:originalEmo];
-					if (indexOfTarget != NSNotFound) {
-						[array insertObject:emo atIndex:indexOfTarget + 1];
-					}
+	NSString *paleEmojis = @"👦🏻 👧🏻 👨🏻 👩🏻 👮🏻 👰🏻 👱🏻 👲🏻 👳🏻 👴🏻 👵🏻 👶🏻 👷🏻 👸🏻 💂🏻 👼🏻 🎅🏻 🙇🏻 💁🏻 🙅🏻 🙆🏻 🙋🏻 🙎🏻 🙍🏻 💆🏻 💇🏻 💅🏻 👂🏻 👃🏻 👋🏻 👍🏻 👎🏻 ☝🏻 👆🏻 👇🏻 👈🏻 👉🏻 👌🏻 ✌🏻 👊🏻 ✊🏻 ✋🏻 💪🏻 👐🏻 🙌🏻 👏🏻 🙏🏻 🖖🏻️";
+	NSString *creamEmojis = @"👦🏼 👧🏼 👨🏼 👩🏼 👮🏼 👰🏼 👱🏼 👲🏼 👳🏼 👴🏼 👵🏼 👶🏼 👷🏼 👸🏼 💂🏼 👼🏼 🎅🏼 🙇🏼 💁🏼 🙅🏼 🙆🏼 🙋🏼 🙎🏼 🙍🏼 💆🏼 💇🏼 💅🏼 👂🏼 👃🏼 👋🏼 👍🏼 👎🏼 ☝🏼 👆🏼 👇🏼 👈🏼 👉🏼 👌🏼 ✌🏼 👊🏼 ✊🏼 ✋🏼 💪🏼 👐🏼 🙌🏼 👏🏼 🙏🏼 🖖🏼️";
+	NSString *moderateBrownEmojis = @"👦🏽 👧🏽 👨🏽 👩🏽 👮🏽 👰🏽 👱🏽 👲🏽 👳🏽 👴🏽 👵🏽 👶🏽 👷🏽 👸🏽 💂🏽 👼🏽 🎅🏽 🙇🏽 💁🏽 🙅🏽 🙆🏽 🙋🏽 🙎🏽 🙍🏽 💆🏽 💇🏽 💅🏽 👂🏽 👃🏽 👋🏽 👍🏽 👎🏽 ☝🏽 👆🏽 👇🏽 👈🏽 👉🏽 👌🏽 ✌🏽 👊🏽 ✊🏽 ✋🏽 💪🏽 👐🏽 🙌🏽 👏🏽 🙏🏽 🖖🏽️";
+	NSString *darkBrownEmojis = @"👦🏾 👧🏾 👨🏾 👩🏾 👮🏾 👰🏾 👱🏾 👲🏾 👳🏾 👴🏾 👵🏾 👶🏾 👷🏾 👸🏾 💂🏾 👼🏾 🎅🏾 🙇🏾 💁🏾 🙅🏾 🙆🏾 🙋🏾 🙎🏾 🙍🏾 💆🏾 💇🏾 💅🏾 👂🏾 👃🏾 👋🏾 👍🏾 👎🏾 ☝🏾 👆🏾 👇🏾 👈🏾 👉🏾 👌🏾 ✌🏾 👊🏾 ✊🏾 ✋🏾 💪🏾 👐🏾 🙌🏾 👏🏾 🙏🏾 🖖🏾️";
+	NSString *blackEmojis = @"👦🏿 👧🏿 👨🏿 👩🏿 👮🏿 👰🏿 👱🏿 👲🏿 👳🏿 👴🏿 👵🏿 👶🏿 👷🏿 👸🏿 💂🏿 👼🏿 🎅🏿 🙇🏿 💁🏿 🙅🏿 🙆🏿 🙋🏿 🙎🏿 🙍🏿 💆🏿 💇🏿 💅🏿 👂🏿 👃🏿 👋🏿 👍🏿 👎🏿 ☝🏿 👆🏿 👇🏿 👈🏿 👉🏿 👌🏿 ✌🏿 👊🏿 ✊🏿 ✋🏿 💪🏿 👐🏿 🙌🏿 👏🏿 🙏🏿 🖖🏿️";
+	NSArray *skin2 = [paleEmojis componentsSeparatedByString:@" "];
+	NSArray *skin3 = [creamEmojis componentsSeparatedByString:@" "];
+	NSArray *skin4 = [moderateBrownEmojis componentsSeparatedByString:@" "];
+	NSArray *skin5 = [darkBrownEmojis componentsSeparatedByString:@" "];
+	NSArray *skin6 = [blackEmojis componentsSeparatedByString:@" "];
+	for (NSUInteger index = 0; index < diverseTargets.count; index++) {
+		NSString *diverseTarget = diverseTargets[index];
+		for (UIKeyboardEmoji *originalEmo in emoji) {
+			if ([originalEmo.emojiString isEqualToString:diverseTarget]) {
+				NSUInteger indexOfTarget = [array indexOfObject:originalEmo];
+				if (indexOfTarget != NSNotFound) {
+					UIKeyboardEmoji *emo6 = emojiFromStringAndDingbat(skin6[index], YES);
+					UIKeyboardEmoji *emo5 = emojiFromStringAndDingbat(skin5[index], YES);
+					UIKeyboardEmoji *emo4 = emojiFromStringAndDingbat(skin4[index], YES);
+					UIKeyboardEmoji *emo3 = emojiFromStringAndDingbat(skin3[index], YES);
+					UIKeyboardEmoji *emo2 = emojiFromStringAndDingbat(skin2[index], YES);
+					[array insertObject:emo6 atIndex:indexOfTarget + 1];
+					[array insertObject:emo5 atIndex:indexOfTarget + 1];
+					[array insertObject:emo4 atIndex:indexOfTarget + 1];
+					[array insertObject:emo3 atIndex:indexOfTarget + 1];
+					[array insertObject:emo2 atIndex:indexOfTarget + 1];
 				}
 			}
 		}
@@ -225,8 +251,71 @@ BOOL added4;
 
 %end
 
+/*%hook UIKeyboardImpl
+
+- (void)deleteBackwardAndNotify:(BOOL)notify
+{
+	BOOL oneMore = NO;
+	NSString *text = [[self inputDelegate] text];
+	if (text) {
+		NSString *lastChar = [text substringFromIndex:[text length] - 1];
+		oneMore = isSkinTone(lastChar);
+	}
+	%orig;
+	if (oneMore)
+		%orig;
+}
+
+%end*/
+
+%group preiOS7
+
+%hook UIKeyboardEmoji
+
+static char _dingbat;
+
+%new
++ (UIKeyboardEmoji *)emojiWithString:(NSString *)string hasDingbat:(BOOL)dingbat
+{
+	self = [self emojiWithString:string];
+	objc_setAssociatedObject(self, &_dingbat, @(dingbat), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+	return self;
+}
+
+%new
+- (id)initWithString:(NSString *)string hasDingbat:(BOOL)dingbat
+{
+	self = [[$UIKeyboardEmoji alloc] initWithString:string];
+	objc_setAssociatedObject(self, &_dingbat, @(dingbat), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+	return self;
+}
+
+%new
+- (BOOL)hasDingbat
+{
+	return [objc_getAssociatedObject(self, &_dingbat) boolValue];
+}
+
+%end
+
+%hook UIKeyboardEmojiInputController
+
+- (void)emojiUsed:(UIKeyboardEmoji *)emoji
+{
+	/*if (emoji.hasDingbat)
+		emoji.emojiString = [NSString stringWithFormat:@"%@%@", emoji.emojiString];*/
+	%orig;
+}
+
+%end
+
+%end
+
 %ctor
 {
 	$UIKeyboardEmoji = NSClassFromString(@"UIKeyboardEmoji");
+	if (!isiOS7Up) {
+		%init(preiOS7);
+	}
 	%init;
 }
