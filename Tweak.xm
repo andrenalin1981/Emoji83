@@ -263,6 +263,14 @@ static void addDiverseEmojis3(UIKeyboardEmojiCategory *emojiObject)
 	emojiObject.emoji = array;
 }
 
+static void addMMWWEmoji(UIKeyboardEmojiCategory *emojiObject)
+{
+	addEmojisForIndexAtIndex(emojiObject, @[@"👨‍❤️‍💋‍👨"], 1, 145, YES);
+	addEmojisForIndexAtIndex(emojiObject, @[@"👩‍❤️‍💋‍👩"], 1, 145, YES);
+	addEmojisForIndexAtIndex(emojiObject, @[@"👨‍❤️‍👨"], 1, 148, YES);
+	addEmojisForIndexAtIndex(emojiObject, @[@"👩‍❤️‍👩"], 1, 148, YES);
+}
+
 static void updateCategory(UIKeyboardEmojiCategory *category, int type)
 {
 	[[NSClassFromString(@"UIKeyboardEmojiCategory") categories] replaceObjectAtIndex:type withObject:category];
@@ -280,6 +288,7 @@ BOOL added4;
 	if (type == 1 && !added1) {
 		addVulcanEmoji(category);
 		addFamilyEmojis(category);
+		addMMWWEmoji(category);
 		addDiverseEmojis1(category);
 		updateCategory(category, type);
 		added1 = YES;
