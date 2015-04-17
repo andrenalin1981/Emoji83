@@ -83,11 +83,17 @@ static NSString *emojiFromUnicode(uint32_t unicode)
 	return [NSString stringWithUnichar:unicode];
 }
 
-static NSString *unicodeFromEmoji(NSString *emoji)
+static uint32_t _unicodeFromEmoji(NSString *emoji)
 {
 	NSData *data = [emoji dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
 	uint32_t unicode;
 	[data getBytes:&unicode length:sizeof(unicode)];
+	return unicode;
+}
+
+static NSString *unicodeFromEmoji(NSString *emoji)
+{
+	uint32_t unicode = _unicodeFromEmoji(emoji);
 	return [NSString stringWithFormat:@"%x", unicode];
 }
 
@@ -126,7 +132,7 @@ static NSArray *diverseEmojisForEmojiString(NSString *emoji)
 	NSMutableArray *emojis = [NSMutableArray arrayWithCapacity:5];
 	for (int type = 6; type >= 2; type--) {
 		NSString *skin = skinToneUnicodeForFitzpatrickType(type);
-		NSString *diverseEmoji = [NSString stringWithFormat:@"%@%@", emoji, skin];
+		NSString *diverseEmoji = [[NSString stringWithFormat:@"%@%@", emoji, skin] precomposedStringWithCanonicalMapping];
 		[emojis addObject:diverseEmoji];
 	}
 	return emojis;
@@ -144,22 +150,24 @@ static NSArray *diverseEmojisForEmojiString(NSString *emoji)
 
 Class $UIKeyboardEmoji;
 
-static UIKeyboardEmoji *emojiFromStringAndDingbat(NSString *myEmoji, BOOL dingbat)
+static UIKeyboardEmoji *emojiFromString(NSString *myEmoji)
 {
+	NSString *unicode = unicodeFromEmoji(myEmoji);
+	BOOL dingbat = [unicode isEqualToString:@"270a"] || [unicode isEqualToString:@"270b"];
 	UIKeyboardEmoji *emo = [$UIKeyboardEmoji respondsToSelector:@selector(emojiWithString:hasDingbat:)] ?
 									[$UIKeyboardEmoji emojiWithString:myEmoji hasDingbat:dingbat] :
 									[$UIKeyboardEmoji emojiWithString:myEmoji];
 	return emo;
 }
 
-static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index, NSUInteger emojiIndex, BOOL dingbat)
+static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index, NSUInteger emojiIndex)
 {
 	NSArray *emoji = emojiObject.emoji;
 	if (emoji.count != 0 && myEmojis.count != 0) {
 		NSMutableArray *array = [NSMutableArray array];
 		[array addObjectsFromArray:emoji];
 		for (NSString *myEmoji in myEmojis) {
-			UIKeyboardEmoji *emo = emojiFromStringAndDingbat(myEmoji, dingbat);
+			UIKeyboardEmoji *emo = emojiFromString(myEmoji);
 			if (![array containsObject:emo]) {
 				if (emojiIndex != 0 && emojiIndex < array.count)
 					[array insertObject:emo atIndex:emojiIndex];
@@ -173,12 +181,12 @@ static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArr
 
 static void addEmojisForIndexWithDingbat(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index)
 {
-	addEmojisForIndexAtIndex(emojiObject, myEmojis, index, 0, YES);
+	addEmojisForIndexAtIndex(emojiObject, myEmojis, index, 0);
 }
 
 static void addVulcanEmoji(UIKeyboardEmojiCategory *emojiObject)
 {
-	addEmojisForIndexAtIndex(emojiObject, @[@"🖖"], 1, 123, YES);
+	addEmojisForIndexAtIndex(emojiObject, @[@"🖖"], 1, 123);
 }
 
 static void addFlagEmojis(UIKeyboardEmojiCategory *emojiObject)
@@ -191,7 +199,7 @@ static void addFlagEmojis(UIKeyboardEmojiCategory *emojiObject)
 static void addFamilyEmojis(UIKeyboardEmojiCategory *emojiObject)
 {
 	NSArray *families = @[@"👨‍👩‍👧", @"👨‍👩‍👦‍👦", @"👨‍👩‍👧‍👧", @"👩‍👩‍👦", @"👩‍👩‍👧", @"👩‍👩‍👧‍👦", @"👩‍👩‍👦‍👦", @"👩‍👩‍👧‍👧", @"👨‍👨‍👦", @"👨‍👨‍👧", @"👨‍👨‍👧‍👦", @"👨‍👨‍👦‍👦", @"👨‍👨‍👧‍👧"];
-	addEmojisForIndexAtIndex(emojiObject, families, 1, 129, NO);
+	addEmojisForIndexAtIndex(emojiObject, families, 1, 129);
 }
 
 static void addDiverseEmojis1(UIKeyboardEmojiCategory *emojiObject)
@@ -219,11 +227,11 @@ static void addDiverseEmojis1(UIKeyboardEmojiCategory *emojiObject)
 			if ([originalEmo.emojiString isEqualToString:diverseTarget]) {
 				NSUInteger indexOfTarget = [array indexOfObject:originalEmo];
 				if (indexOfTarget != NSNotFound) {
-					UIKeyboardEmoji *emo6 = emojiFromStringAndDingbat(skin6[index], YES);
-					UIKeyboardEmoji *emo5 = emojiFromStringAndDingbat(skin5[index], YES);
-					UIKeyboardEmoji *emo4 = emojiFromStringAndDingbat(skin4[index], YES);
-					UIKeyboardEmoji *emo3 = emojiFromStringAndDingbat(skin3[index], YES);
-					UIKeyboardEmoji *emo2 = emojiFromStringAndDingbat(skin2[index], YES);
+					UIKeyboardEmoji *emo6 = emojiFromString(skin6[index]);
+					UIKeyboardEmoji *emo5 = emojiFromString(skin5[index]);
+					UIKeyboardEmoji *emo4 = emojiFromString(skin4[index]);
+					UIKeyboardEmoji *emo3 = emojiFromString(skin3[index]);
+					UIKeyboardEmoji *emo2 = emojiFromString(skin2[index]);
 					[array insertObject:emo6 atIndex:indexOfTarget + 1];
 					[array insertObject:emo5 atIndex:indexOfTarget + 1];
 					[array insertObject:emo4 atIndex:indexOfTarget + 1];
@@ -253,7 +261,7 @@ static void addDiverseEmojis3(UIKeyboardEmojiCategory *emojiObject)
 				if (indexOfTarget != NSNotFound) {
 					NSArray *diverses = diverseEmojisForEmojiString(diverseTarget);
 					for (NSString *diverse in diverses) {
-						UIKeyboardEmoji *emo = emojiFromStringAndDingbat(diverse, YES);
+						UIKeyboardEmoji *emo = emojiFromString(diverse);
 						[array insertObject:emo atIndex:indexOfTarget + 1];
 					}
 				}
@@ -263,12 +271,12 @@ static void addDiverseEmojis3(UIKeyboardEmojiCategory *emojiObject)
 	emojiObject.emoji = array;
 }
 
-static void addMMWWEmoji(UIKeyboardEmojiCategory *emojiObject)
+static void addMMWWEmojis(UIKeyboardEmojiCategory *emojiObject)
 {
-	addEmojisForIndexAtIndex(emojiObject, @[@"👨‍❤️‍💋‍👨"], 1, 145, YES);
-	addEmojisForIndexAtIndex(emojiObject, @[@"👩‍❤️‍💋‍👩"], 1, 145, YES);
-	addEmojisForIndexAtIndex(emojiObject, @[@"👨‍❤️‍👨"], 1, 148, YES);
-	addEmojisForIndexAtIndex(emojiObject, @[@"👩‍❤️‍👩"], 1, 148, YES);
+	addEmojisForIndexAtIndex(emojiObject, @[@"👨‍❤️‍💋‍👨"], 1, 145);
+	addEmojisForIndexAtIndex(emojiObject, @[@"👩‍❤️‍💋‍👩"], 1, 145);
+	addEmojisForIndexAtIndex(emojiObject, @[@"👨‍❤️‍👨"], 1, 148);
+	addEmojisForIndexAtIndex(emojiObject, @[@"👩‍❤️‍👩"], 1, 148);
 }
 
 static void updateCategory(UIKeyboardEmojiCategory *category, int type)
@@ -288,7 +296,7 @@ BOOL added4;
 	if (type == 1 && !added1) {
 		addVulcanEmoji(category);
 		addFamilyEmojis(category);
-		addMMWWEmoji(category);
+		addMMWWEmojis(category);
 		addDiverseEmojis1(category);
 		updateCategory(category, type);
 		added1 = YES;
@@ -333,54 +341,8 @@ BOOL added4;
 
 %end*/
 
-%group preiOS7
-
-%hook UIKeyboardEmoji
-
-static char _dingbat;
-
-%new
-+ (UIKeyboardEmoji *)emojiWithString:(NSString *)string hasDingbat:(BOOL)dingbat
-{
-	self = [self emojiWithString:string];
-	objc_setAssociatedObject(self, &_dingbat, @(dingbat), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-	return self;
-}
-
-%new
-- (id)initWithString:(NSString *)string hasDingbat:(BOOL)dingbat
-{
-	self = [[$UIKeyboardEmoji alloc] initWithString:string];
-	objc_setAssociatedObject(self, &_dingbat, @(dingbat), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-	return self;
-}
-
-%new
-- (BOOL)hasDingbat
-{
-	return [objc_getAssociatedObject(self, &_dingbat) boolValue];
-}
-
-%end
-
-%hook UIKeyboardEmojiInputController
-
-- (void)emojiUsed:(UIKeyboardEmoji *)emoji
-{
-	/*if (emoji.hasDingbat)
-		emoji.emojiString = [NSString stringWithFormat:@"%@%@", emoji.emojiString];*/
-	%orig;
-}
-
-%end
-
-%end
-
 %ctor
 {
 	$UIKeyboardEmoji = NSClassFromString(@"UIKeyboardEmoji");
-	if (!isiOS7Up) {
-		%init(preiOS7);
-	}
 	%init;
 }
