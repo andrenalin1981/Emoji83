@@ -175,15 +175,15 @@ static void addEmoByUnicodeToArray11(NSMutableArray *array, unsigned short secon
 static NSArray *vulcans()
 {
 	NSMutableArray *array = [NSMutableArray array];
-	unichar vulcan[2] = { 0xD83D, 0XDD96 };
-	NSString *string = [[NSString alloc] initWithCharacters:vulcan length:2];
-	[array addObject:string];
-	[string release];
 	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFF);
 	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFE);
 	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFD);
 	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFC);
 	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFB);
+	unichar vulcan[2] = { 0xD83D, 0XDD96 };
+	NSString *string = [[NSString alloc] initWithCharacters:vulcan length:2];
+	[array addObject:string];
+	[string release];
 	return array;
 }
 
