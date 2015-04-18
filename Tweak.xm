@@ -179,11 +179,11 @@ static NSArray *vulcans()
 	NSString *string = [[NSString alloc] initWithCharacters:vulcan length:2];
 	[array addObject:string];
 	[string release];
-	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFB);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFC);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFD);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFE);
 	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFF);
+	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFE);
+	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFD);
+	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFC);
+	addEmoByUnicodeToArray4(array, 0xD83D, 0XDD96, 0xD83C, 0xDFFB);
 	return array;
 }
 
