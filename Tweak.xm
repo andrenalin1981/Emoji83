@@ -88,15 +88,13 @@
 @end
 
 @interface NSString (Addition)
-+ (NSString *)stringWithUnichar:(UniChar)aChar;
++ (NSString *)stringWithUnichar:(UniChar *)aChar;
 - (unichar)_firstLongCharacter;
 @end
 
 static NSString *emojiFromUnicode(UniChar *unicode)
 {
-	NSString *emoji = [[NSString alloc] initWithBytes:&unicode length:sizeof(unicode) encoding:NSUTF32LittleEndianStringEncoding];
-	return [emoji autorelease];
-	//return [NSString stringWithUnichar:unicode];
+	return [NSString stringWithUnichar:unicode];
 }
 
 static UniChar *_unicodeFromEmoji(NSString *emoji)
@@ -529,7 +527,7 @@ static BOOL isSkinTone(NSString *skin)
 			fam3 = [families() containsObject:like8];
 			if (text.length >= 11) {
 				NSString *like11 = [text substringFromIndex:text.length - 11];
-				mmww = [mmwwks() containsObject:like11];
+				mmwwk = [mmwwks() containsObject:like11];
 				fam4 = [families() containsObject:like11];
 			}
 		}
