@@ -94,7 +94,11 @@
 
 static NSString *emojiFromUnicode(UniChar *unicode)
 {
-	return [NSString stringWithUnichar:unicode];
+	NSString *_emoji = [[NSString alloc] initWithBytes:&unicode length:sizeof(unicode) encoding:NSUTF32LittleEndianStringEncoding];
+	NSString *emoji = _emoji;
+	[_emoji release];
+	return emoji;
+	//return [NSString stringWithUnichar:unicode];
 }
 
 static UniChar *_unicodeFromEmoji(NSString *emoji)
