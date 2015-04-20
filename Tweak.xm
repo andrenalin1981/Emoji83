@@ -1,8 +1,12 @@
 #import "../PS.h"
-//#import <CoreText/CoreText.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 @interface NSCharacterSet (Private)
 - (NSUInteger)count;
+@end
+
+@interface NSString (Private)
+- (BOOL)_containsEmoji;
 @end
 
 @protocol textInputDelegate
@@ -88,7 +92,7 @@
 @end
 
 @interface NSString (Addition)
-+ (NSString *)stringWithUnichar:(UniChar *)aChar;
++ (NSString *)stringWithUnichar:(unsigned long)aChar;
 - (unichar)_firstLongCharacter;
 @end
 
@@ -120,7 +124,7 @@ Class $UIKeyboardEmoji;
 static UIKeyboardEmoji *emojiFromString(NSString *myEmoji)
 {
 	NSString *unicode = unicodeFromEmoji(myEmoji);
-	BOOL dingbat = [unicode isEqualToString:@"270a"] || [unicode isEqualToString:@"270b"];
+	BOOL dingbat = [unicode isEqualToString:@"261d"] || [unicode isEqualToString:@"270c"];
 	UIKeyboardEmoji *emo = [$UIKeyboardEmoji respondsToSelector:@selector(emojiWithString:hasDingbat:)] ?
 									[$UIKeyboardEmoji emojiWithString:myEmoji hasDingbat:dingbat] :
 									[$UIKeyboardEmoji emojiWithString:myEmoji];
@@ -158,235 +162,98 @@ static void addFlagEmojis(UIKeyboardEmojiCategory *emojiObject)
 	addEmojisForIndexWithDingbat(emojiObject, flags, 4);
 }
 
-static void addEmoByUnicodeToArray3(NSMutableArray *array, unsigned short first, unsigned short second, unsigned short skinType)
-{
-	unichar emo[3] = { first, second, skinType };
-	NSString *string = [[NSString alloc] initWithCharacters:emo length:3];
-	[array addObject:string];
-	[string release];
-}
-
-static void addEmoByUnicodeToArray4(NSMutableArray *array, unsigned short first, unsigned short second, unsigned short third, unsigned short skinType)
-{
-	unichar emo[4] = { first, second, third, skinType };
-	NSString *string = [[NSString alloc] initWithCharacters:emo length:4];
-	[array addObject:string];
-	[string release];
-}
-
-static void addEmoByUnicodeToArray8(NSMutableArray *array, unsigned short second, unsigned short fifth, unsigned short eighth)
-{
-	unichar emo[8] = { 0xD83D, second, 0x200D, 0xD83D, fifth, 0x200D, 0xD83D, eighth };
-	NSString *string = [[NSString alloc] initWithCharacters:emo length:8];
-	[array addObject:string];
-	[string release];
-}
-
-static void addEmoByUnicodeToArray11(NSMutableArray *array, unsigned short second, unsigned short fifth, unsigned short eighth, unsigned short eleventh)
-{
-	unichar emo[11] = { 0xD83D, second, 0x200D, 0xD83D, fifth, 0x200D, 0xD83D, eighth, 0x200D, 0xD83D, eleventh };
-	NSString *string = [[NSString alloc] initWithCharacters:emo length:11];
-	[array addObject:string];
-	[string release];
-}
-
-static NSArray *vulcans()
-{
-	NSMutableArray *array = [NSMutableArray array];
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDD96, 0xD83C, 0xDFFF);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDD96, 0xD83C, 0xDFFE);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDD96, 0xD83C, 0xDFFD);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDD96, 0xD83C, 0xDFFC);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDD96, 0xD83C, 0xDFFB);
-	unichar vulcan[2] = { 0xD83D, 0xDD96 };
-	NSString *string = [[NSString alloc] initWithCharacters:vulcan length:2];
-	[array addObject:string];
-	[string release];
-	return array;
-}
-
-static void addVulcanEmojis(UIKeyboardEmojiCategory *emojiObject)
-{
-	addEmojisForIndexAtIndex(emojiObject, vulcans(), 1, 123);
-}
-
 static NSArray *families()
 {
-	NSMutableArray *array = [NSMutableArray array];
-	addEmoByUnicodeToArray11(array, 0xDC68, 0xDC68, 0xDC67, 0xDC67);
-	addEmoByUnicodeToArray11(array, 0xDC68, 0xDC68, 0xDC66, 0xDC66);
-	addEmoByUnicodeToArray11(array, 0xDC68, 0xDC68, 0xDC67, 0xDC66);
-	addEmoByUnicodeToArray8(array, 0xDC68, 0xDC68, 0xDC67);
-	addEmoByUnicodeToArray8(array, 0xDC68, 0xDC68, 0xDC66);
-	addEmoByUnicodeToArray11(array, 0xDC69, 0xDC69, 0xDC67, 0xDC67);
-	addEmoByUnicodeToArray11(array, 0xDC69, 0xDC69, 0xDC66, 0xDC66);
-	addEmoByUnicodeToArray11(array, 0xDC69, 0xDC69, 0xDC67, 0xDC66);
-	addEmoByUnicodeToArray8(array, 0xDC69, 0xDC69, 0xDC67);
-	addEmoByUnicodeToArray8(array, 0xDC69, 0xDC69, 0xDC66);
-	addEmoByUnicodeToArray11(array, 0xDC68, 0xDC69, 0xDC67, 0xDC67);
-	addEmoByUnicodeToArray11(array, 0xDC68, 0xDC69, 0xDC66, 0xDC66);
-	addEmoByUnicodeToArray11(array, 0xDC68, 0xDC69, 0xDC67, 0xDC66);
-	addEmoByUnicodeToArray8(array, 0xDC68, 0xDC69, 0xDC67);
-	return array;
+	return @[@"👨‍👨‍👧‍👧", @"👨‍👨‍👦‍👦", @"👨‍👨‍👧‍👦", @"👨‍👨‍👧", @"👨‍👨‍👦", @"👩‍👩‍👧‍👧", @"👩‍👩‍👦‍👦", @"👩‍👩‍👧‍👦", @"👩‍👩‍👧", @"👩‍👩‍👦", @"👨‍👩‍👧‍👧", @"👨‍👩‍👦‍👦", @"👨‍👩‍👧"];
 }
 
 static void addFamilyEmojis(UIKeyboardEmojiCategory *emojiObject)
 {
-	addEmojisForIndexAtIndex(emojiObject, families(), 1, 134);
+	addEmojisForIndexAtIndex(emojiObject, families(), 1, 129);
 }
 
-static NSMutableArray *skinnedEmojis1(unsigned short skinType)
+static NSMutableArray *_paleEmojis(NSArray *diverseTarget)
 {
 	NSMutableArray *array = [NSMutableArray array];
-	addEmoByUnicodeToArray4(array, 0xD83C, 0xDFC3, 0xD83C, skinType);
-	
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC42, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC43, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC46, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC47, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC48, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC49, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC4A, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC4C, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC4B, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC4D, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC4E, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC4F, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC50, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC66, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC67, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC68, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC69, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC6E, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC70, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC71, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC72, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC73, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC74, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC75, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC76, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC77, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC78, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC7C, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC81, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC82, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC83, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC85, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC86, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDC87, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDCAA, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE45, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE46, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE47, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE4B, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE4C, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE4D, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE4E, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDE4F, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDEB6, 0xD83C, skinType);
-	
-	addEmoByUnicodeToArray3(array, 0x261D, 0xD83C, skinType);
-	addEmoByUnicodeToArray3(array, 0x270A, 0xD83C, skinType);
-	addEmoByUnicodeToArray3(array, 0x270B, 0xD83C, skinType);
-	addEmoByUnicodeToArray3(array, 0x270C, 0xD83C, skinType);
-	
-	return array;
-}
-
-static NSMutableArray *skinnedEmojis3(unsigned short skinType)
-{
-	NSMutableArray *array = [NSMutableArray array];
-	addEmoByUnicodeToArray4(array, 0xD83C, 0xDF85, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83C, 0xDFC4, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83C, 0xDFC7, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83C, 0xDFCA, 0xD83C, skinType);
-	
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDEA3, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDEB4, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDEB5, 0xD83C, skinType);
-	addEmoByUnicodeToArray4(array, 0xD83D, 0xDEC0, 0xD83C, skinType);
-	
-	return array;
-}
-
-static NSMutableArray *_paleEmojis()
-{
-	return skinnedEmojis1(0xDFFB);
-}
-
-static NSMutableArray *_creamEmojis()
-{
-	return skinnedEmojis1(0xDFFC);
-}
-
-static NSMutableArray *_moderateBrownEmojis()
-{
-	return skinnedEmojis1(0xDFFD);
-}
-
-static NSMutableArray *_darkBrownEmojis()
-{
-	return skinnedEmojis1(0xDFFE);
-}
-
-static NSMutableArray *_blackEmojis()
-{
-	return skinnedEmojis1(0xDFFF);
-}
-
-static NSString *originalEmojiForSkinnedEmoji(NSString *emoji)
-{
-	/*NSString *unicode = unicodeFromEmoji(emoji);
-	if ([unicode isEqualToString:@"270c"]) {
-		return @"✌";
+	for (NSString *emoji in diverseTarget) {
+		NSString *skin = [NSString stringWithFormat:@"%@%@", [NSString stringWithUnichar:[emoji _firstLongCharacter]], @"🏻"];
+		[array addObject:skin];
 	}
-	if ([unicode isEqualToString:@"261d"])
-		return @"☝";*/
-	UniChar *aChar = _unicodeFromEmoji(emoji);
-	return emojiFromUnicode(aChar);
+	return array;
 }
 
-static void findOriginalEmojiIndexAndAddDiversity(NSMutableArray *array, NSArray *diverseTargets, NSArray *emoji, NSArray *skin2, NSArray *skin3, NSArray *skin4, NSArray *skin5, NSArray *skin6)
+static NSMutableArray *_creamEmojis(NSArray *diverseTarget)
 {
-	for (NSString *diverseTarget in diverseTargets) {
+	NSMutableArray *array = [NSMutableArray array];
+	for (NSString *emoji in diverseTarget) {
+		NSString *skin = [NSString stringWithFormat:@"%@%@", [NSString stringWithUnichar:[emoji _firstLongCharacter]], @"🏼"];
+		[array addObject:skin];
+	}
+	return array;
+}
+
+static NSMutableArray *_moderateBrownEmojis(NSArray *diverseTarget)
+{
+	NSMutableArray *array = [NSMutableArray array];
+	for (NSString *emoji in diverseTarget) {
+		NSString *skin = [NSString stringWithFormat:@"%@%@", [NSString stringWithUnichar:[emoji _firstLongCharacter]], @"🏽"];
+		[array addObject:skin];
+	}
+	return array;
+}
+
+static NSMutableArray *_darkBrownEmojis(NSArray *diverseTarget)
+{
+	NSMutableArray *array = [NSMutableArray array];
+	for (NSString *emoji in diverseTarget) {
+		NSString *skin = [NSString stringWithFormat:@"%@%@", [NSString stringWithUnichar:[emoji _firstLongCharacter]], @"🏾"];
+		[array addObject:skin];
+	}
+	return array;
+}
+
+static NSMutableArray *_blackEmojis(NSArray *diverseTarget)
+{
+	NSMutableArray *array = [NSMutableArray array];
+	for (NSString *emoji in diverseTarget) {
+		NSString *skin = [NSString stringWithFormat:@"%@%@", [NSString stringWithUnichar:[emoji _firstLongCharacter]], @"🏿"];
+		[array addObject:skin];
+	}
+	return array;
+}
+
+static void findOriginalEmojiIndexAndAddDiversity(NSMutableArray *array, NSArray *diverseTargets, NSArray *emoji)
+{
+	NSArray *skin2 = _paleEmojis(diverseTargets);
+	NSArray *skin3 = _creamEmojis(diverseTargets);
+	NSArray *skin4 = _moderateBrownEmojis(diverseTargets);
+	NSArray *skin5 = _darkBrownEmojis(diverseTargets);
+	NSArray *skin6 = _blackEmojis(diverseTargets);
+	for (NSUInteger index = 0; index < diverseTargets.count; index++) {
+		NSString *diverseTarget = diverseTargets[index];
 		for (UIKeyboardEmoji *originalEmo in emoji) {
 			if ([originalEmo.emojiString isEqualToString:diverseTarget]) {
 				NSUInteger indexOfTarget = [array indexOfObject:originalEmo];
 				if (indexOfTarget != NSNotFound) {
-					for (NSString *skinnedEmo in skin6) {
-						if ([diverseTarget isEqualToString:originalEmojiForSkinnedEmoji(skinnedEmo)]) {
-							UIKeyboardEmoji *emo = emojiFromString(skinnedEmo);
-							[array insertObject:emo atIndex:indexOfTarget + 1];
-						}
-					}
-					for (NSString *skinnedEmo in skin5) {
-						if ([diverseTarget isEqualToString:originalEmojiForSkinnedEmoji(skinnedEmo)]) {
-							UIKeyboardEmoji *emo = emojiFromString(skinnedEmo);
-							[array insertObject:emo atIndex:indexOfTarget + 1];
-						}
-					}
-					for (NSString *skinnedEmo in skin4) {
-						if ([diverseTarget isEqualToString:originalEmojiForSkinnedEmoji(skinnedEmo)]) {
-							UIKeyboardEmoji *emo = emojiFromString(skinnedEmo);
-							[array insertObject:emo atIndex:indexOfTarget + 1];
-						}
-					}
-					for (NSString *skinnedEmo in skin3) {
-						if ([diverseTarget isEqualToString:originalEmojiForSkinnedEmoji(skinnedEmo)]) {
-							UIKeyboardEmoji *emo = emojiFromString(skinnedEmo);
-							[array insertObject:emo atIndex:indexOfTarget + 1];
-						}
-					}
-					for (NSString *skinnedEmo in skin2) {
-						if ([diverseTarget isEqualToString:originalEmojiForSkinnedEmoji(skinnedEmo)]) {
-							UIKeyboardEmoji *emo = emojiFromString(skinnedEmo);
-							[array insertObject:emo atIndex:indexOfTarget + 1];
-						}
-					}
+					UIKeyboardEmoji *emo6 = emojiFromString(skin6[index]);
+					UIKeyboardEmoji *emo5 = emojiFromString(skin5[index]);
+					UIKeyboardEmoji *emo4 = emojiFromString(skin4[index]);
+					UIKeyboardEmoji *emo3 = emojiFromString(skin3[index]);
+					UIKeyboardEmoji *emo2 = emojiFromString(skin2[index]);
+					[array insertObject:emo6 atIndex:indexOfTarget + 1];
+					[array insertObject:emo5 atIndex:indexOfTarget + 1];
+					[array insertObject:emo4 atIndex:indexOfTarget + 1];
+					[array insertObject:emo3 atIndex:indexOfTarget + 1];
+					[array insertObject:emo2 atIndex:indexOfTarget + 1];
 				}
 			}
 		}
 	}
+}
+
+static void addVulcanEmojis(UIKeyboardEmojiCategory *emojiObject)
+{
+	addEmojisForIndexAtIndex(emojiObject, @[[NSString stringWithUnichar:0x1F596]], 1, 123);
 }
 
 static void addDiverseEmojis1(UIKeyboardEmojiCategory *emojiObject)
@@ -397,13 +264,8 @@ static void addDiverseEmojis1(UIKeyboardEmojiCategory *emojiObject)
 	NSMutableArray *array = [NSMutableArray array];
 	[array addObjectsFromArray:emoji];
 	NSArray *diverseTargets = @[@"👦", @"👧", @"👨", @"👩", @"👮", @"👰", @"👱", @"👲", @"👳", @"👴", @"👵", @"👶", @"👷", @"👸", @"💂", @"👼", @"🙇", @"💁", @"🙅", @"🙆", @"🙋", @"🙎", @"🙍", @"💆", @"💇",
-								@"💅", @"👂", @"👃", @"👋", @"👍", @"👎", @"☝", @"👆", @"👇",@"👈", @"👉", @"👌", @"✌", @"👊", @"✊", @"✋", @"💪", @"👐", @"🙌", @"👏", @"🙏", @"🏃", @"🚶", @"💃"];
-	NSArray *skin2 = _paleEmojis();
-	NSArray *skin3 = _creamEmojis();
-	NSArray *skin4 = _moderateBrownEmojis();
-	NSArray *skin5 = _darkBrownEmojis();
-	NSArray *skin6 = _blackEmojis();
-	findOriginalEmojiIndexAndAddDiversity(array, diverseTargets, emoji, skin2, skin3, skin4, skin5, skin6);
+								@"💅", @"👂", @"👃", @"👋", @"👍", @"👎", @"☝", @"👆", @"👇",@"👈", @"👉", @"👌", @"✌", @"👊", @"✊", @"✋", @"💪", @"👐", @"🙌", @"👏", @"🙏", @"🏃", @"🚶", @"💃", [NSString stringWithUnichar:0x1F596]];
+	findOriginalEmojiIndexAndAddDiversity(array, diverseTargets, emoji);
 	emojiObject.emoji = array;
 }
 
@@ -415,49 +277,26 @@ static void addDiverseEmojis3(UIKeyboardEmojiCategory *emojiObject)
 	NSMutableArray *array = [NSMutableArray array];
 	[array addObjectsFromArray:emoji];
 	NSArray *diverseTargets = @[@"🎅", @"🚣", @"🏊", @"🏄", @"🛀", @"🚴", @"🚵", @"🏇"];
-	NSArray *skin2 = skinnedEmojis3(0xDFFB);
-	NSArray *skin3 = skinnedEmojis3(0xDFFC);
-	NSArray *skin4 = skinnedEmojis3(0xDFFD);
-	NSArray *skin5 = skinnedEmojis3(0xDFFE);
-	NSArray *skin6 = skinnedEmojis3(0xDFFF);
-	findOriginalEmojiIndexAndAddDiversity(array, diverseTargets, emoji, skin2, skin3, skin4, skin5, skin6);
+	findOriginalEmojiIndexAndAddDiversity(array, diverseTargets, emoji);
 	emojiObject.emoji = array;
 }
 
 static NSArray *mmwws()
 {
-	NSMutableArray *array = [NSMutableArray array];
-	unichar mm[11] = { 0xD83D, 0xDC68, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, 0xDC68 };
-	NSString *mms = [[NSString alloc] initWithCharacters:mm length:8];
-	[array addObject:mms];
-	[mms release];
-	unichar ww[11] = { 0xD83D, 0xDC69, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, 0xDC69 };
-	NSString *wws = [[NSString alloc] initWithCharacters:ww length:8];
-	[array addObject:wws];
-	[wws release];
-	return array;
+	return @[@"👨‍❤️‍👨", @"👩‍❤️‍👩"];
 }
 
 static NSArray *mmwwks()
 {
-	NSMutableArray *array = [NSMutableArray array];
-	unichar mmk[11] = { 0xD83D, 0xDC68, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, 0xDC8B, 0x200D, 0xD83D, 0xDC68 };
-	NSString *mmks = [[NSString alloc] initWithCharacters:mmk length:11];
-	[array addObject:mmks];
-	[mmks release];
-	unichar wwk[11] = { 0xD83D, 0xDC69, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, 0xDC8B, 0x200D, 0xD83D, 0xDC69 };
-	NSString *wwks = [[NSString alloc] initWithCharacters:wwk length:11];
-	[array addObject:wwks];
-	[wwks release];
-	return array;
+	return @[@"👨‍❤️‍💋‍👨", @"👩‍❤️‍💋‍👩"];
 }
 
 static void addMMWWEmojis(UIKeyboardEmojiCategory *emojiObject)
 {
-	addEmojisForIndexAtIndex(emojiObject, @[mmwwks()[0]], 1, 151);
-	addEmojisForIndexAtIndex(emojiObject, @[mmwwks()[1]], 1, 151);
-	addEmojisForIndexAtIndex(emojiObject, @[mmwws()[0]], 1, 154);
-	addEmojisForIndexAtIndex(emojiObject, @[mmwws()[1]], 1, 154);
+	addEmojisForIndexAtIndex(emojiObject, @[mmwwks()[0]], 1, 145);
+	addEmojisForIndexAtIndex(emojiObject, @[mmwwks()[1]], 1, 145);
+	addEmojisForIndexAtIndex(emojiObject, @[mmwws()[0]], 1, 148);
+	addEmojisForIndexAtIndex(emojiObject, @[mmwws()[1]], 1, 148);
 }
 
 static void updateCategory(UIKeyboardEmojiCategory *category, int type)
@@ -522,15 +361,16 @@ static BOOL isSkinTone(NSString *skin)
 	BOOL fam3 = NO;
 	BOOL fam4 = NO;
 	NSString *text = [[self inputDelegate] text];
-	if (text.length >= 2) {
-		NSString *skinLike = [text substringFromIndex:text.length - 2];
+	NSUInteger length = text.length;
+	if (length >= 2) {
+		NSString *skinLike = [text substringFromIndex:length - 2];
 		skin = isSkinTone(skinLike);
-		if (text.length >= 8) {
-			NSString *like8 = [text substringFromIndex:text.length - 8];
+		if (length >= 8) {
+			NSString *like8 = [text substringFromIndex:length - 8];
 			mmww = [mmwws() containsObject:like8];
 			fam3 = [families() containsObject:like8];
-			if (text.length >= 11) {
-				NSString *like11 = [text substringFromIndex:text.length - 11];
+			if (length >= 11) {
+				NSString *like11 = [text substringFromIndex:length - 11];
 				mmwwk = [mmwwks() containsObject:like11];
 				fam4 = [families() containsObject:like11];
 			}
@@ -538,9 +378,9 @@ static BOOL isSkinTone(NSString *skin)
 	}
 	if (skin)
 		count++;
-	if (mmww || fam3)
+	else if (mmww || fam3)
 		count += 4;
-	if (mmwwk || fam4)
+	else if (mmwwk || fam4)
 		count += 6;
 	%orig;
 	if (count > 0) {
