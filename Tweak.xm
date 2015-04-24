@@ -687,7 +687,7 @@ static NSMutableArray *_categories;
 				break;
 		}
 	}
-	return [self localizedStringForKey:name];
+	return [$UIKeyboardEmojiCategory localizedStringForKey:name];
 }
 
 - (NSString *)displaySymbol
