@@ -467,6 +467,57 @@ static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, 
 
 %group iOS7Up
 
+static void aHook(UIKeyboardEmojiCategoryBar *self, UIKBTree *key)
+{
+	UIKBTree *_key = MSHookIvar<UIKBTree *>(self, "m_key");
+	[key.subtrees removeAllObjects];
+	NSArray *categories = [$UIKeyboardEmojiCategory categories];
+	NSInteger count = categories.count;
+	NSMutableArray *keys = [NSMutableArray arrayWithCapacity:count];
+	int index = 0;
+	do {
+		UIKBTree *emojiKey = [[UIKBTree alloc] initWithType:8];
+		UIKeyboardEmojiCategory *category = categories[index];
+		int categoryType = category.categoryType;
+		NSString *image = nil;
+		if (categoryType < count) {
+			switch (categoryType) {
+				case 0:
+					image = @"emoji_recents.png";
+					break;
+				case 1:
+					image = @"emoji_people.png";
+					break;
+				case 2:
+					image = @"emoji_nature.png";
+					break;
+				case 3:
+					image = @"emoji_food-and-drink.png";
+					break;
+				case 4:
+					image = @"emoji_celebration.png";
+					break;
+				case 5:
+					image = @"emoji_activity.png";
+					break;
+				case 6:
+					image = @"emoji_travel-and-places.png";
+					break;
+				case 7:
+					image = @"emoji_objects-and-symbols.png";
+					break;
+				default:
+					break;
+			}
+			emojiKey.displayString = image;
+			[keys addObject:[emojiKey autorelease]];
+		}
+		++index;
+	} while (index < count);
+	[_key.subtrees addObjectsFromArray:keys];
+	key = _key;
+}
+
 %hook UIKeyboardEmojiCategoryBar
 
 - (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
@@ -481,60 +532,32 @@ static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, 
 		frame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
 	}
 	self = %orig(frame, keyplane, key);
-	if (self) {
-		if ([%c(UIKBRenderFactory) _enabled]) {
-			UIKBTree *_key = MSHookIvar<UIKBTree *>(self, "m_key");
-			[key.subtrees removeAllObjects];
-			NSArray *categories = [$UIKeyboardEmojiCategory categories];
-			NSInteger count = categories.count;
-			NSMutableArray *keys = [NSMutableArray arrayWithCapacity:count];
-			int index = 0;
-			do {
-				UIKBTree *emojiKey = [[UIKBTree alloc] initWithType:8];
-				UIKeyboardEmojiCategory *category = categories[index];
-				int categoryType = category.categoryType;
-				NSString *image = nil;
-				if (categoryType < count) {
-					switch (categoryType) {
-						case 0:
-							image = @"emoji_recents.png";
-							break;
-						case 1:
-							image = @"emoji_people.png";
-							break;
-						case 2:
-							image = @"emoji_nature.png";
-							break;
-						case 3:
-							image = @"emoji_food-and-drink.png";
-							break;
-						case 4:
-							image = @"emoji_celebration.png";
-							break;
-						case 5:
-							image = @"emoji_activity.png";
-							break;
-						case 6:
-							image = @"emoji_travel-and-places.png";
-							break;
-						case 7:
-							image = @"emoji_objects-and-symbols.png";
-							break;
-						default:
-							break;
-					}
-					emojiKey.displayString = image;
-					[keys addObject:[emojiKey autorelease]];
-				}
-				++index;
-			} while (index < count);
-			[_key.subtrees addObjectsFromArray:keys];
-		}
-	}
+	aHook(self, key);
 	return self;
 }
 
 %end
+
+%hook UIKeyboardEmojiCategoryBar_iPhone
+
+- (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
+{
+	CGFloat height = getScrollViewHeight(keyplane.name);
+	UIKBShape *shape = key.shape;
+	if (shape) {
+		CGFloat height2 = getBarHeight(keyplane.name);
+		CGRect newFrame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
+		shape.frame = newFrame;
+		key.shape = shape;
+		frame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
+	}
+	self = %orig(frame, keyplane, key);
+	aHook(self, key);
+	return self;
+}
+
+%end
+
 
 %end
 
