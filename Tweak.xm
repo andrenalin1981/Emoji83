@@ -20,17 +20,13 @@ static unsigned long *_unicodeFromEmoji(NSString *emoji)
 	return unicode;
 }
 
-Class $UIKeyboardEmoji;
-Class $UIKeyboardEmojiCategory;
-Class $UIKeyboardEmojiGraphics;
-
 static UIKeyboardEmoji *emojiFromString(NSString *myEmoji)
 {
 	UIKeyboardEmoji *emo = nil;
 	unichar unicode = [myEmoji characterAtIndex:0];
 	BOOL dingbat = unicode == 0x261d || unicode == 0x270c;
-	emo = [$UIKeyboardEmoji respondsToSelector:@selector(emojiWithString:hasDingbat:)] ? [$UIKeyboardEmoji emojiWithString:myEmoji hasDingbat:dingbat]
-			: [$UIKeyboardEmoji emojiWithString:myEmoji];
+	emo = [NSClassFromString(@"UIKeyboardEmoji") respondsToSelector:@selector(emojiWithString:hasDingbat:)] ? [NSClassFromString(@"UIKeyboardEmoji") emojiWithString:myEmoji hasDingbat:dingbat]
+			: [NSClassFromString(@"UIKeyboardEmoji") emojiWithString:myEmoji];
 	return emo;
 }
 
@@ -205,7 +201,7 @@ static void addMMWWEmojis(UIKeyboardEmojiCategory *emojiObject)
 
 static void updateCategory(UIKeyboardEmojiCategory *category, int type)
 {
-	[[$UIKeyboardEmojiCategory categories] replaceObjectAtIndex:type withObject:category];
+	[[NSClassFromString(@"UIKeyboardEmojiCategory") categories] replaceObjectAtIndex:type withObject:category];
 }
 
 static void addEmoji(NSMutableArray *emojiArray, NSString *string)
@@ -223,12 +219,12 @@ BOOL added4;
 
 - (NSString *)symbolForRow:(int)row
 {
-	return [$UIKeyboardEmojiCategory categoryForType:row].displaySymbol;
+	return [NSClassFromString(@"UIKeyboardEmojiCategory") categoryForType:row].displaySymbol;
 }
 
 - (NSString *)titleForRow:(int)row
 {
-	return [$UIKeyboardEmojiCategory categoryForType:row].displayName;
+	return [NSClassFromString(@"UIKeyboardEmojiCategory") categoryForType:row].displayName;
 }
 
 %end
@@ -447,7 +443,7 @@ static CGFloat getKeyboardHeight(NSString *name)
 
 static UIImage *emojiCategoryBar(CGRect frame, NSString *imageName, BOOL pressed)
 {
-	return [$UIKeyboardEmojiGraphics imageWithRect:frame name:imageName pressed:pressed];
+	return [NSClassFromString(@"UIKeyboardEmojiGraphics") imageWithRect:frame name:imageName pressed:pressed];
 }
 
 static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, BOOL pressed)
@@ -471,7 +467,7 @@ static void aHook(UIKeyboardEmojiCategoryBar *self, UIKBTree *key)
 {
 	UIKBTree *_key = MSHookIvar<UIKBTree *>(self, "m_key");
 	[key.subtrees removeAllObjects];
-	NSArray *categories = [$UIKeyboardEmojiCategory categories];
+	NSArray *categories = [NSClassFromString(@"UIKeyboardEmojiCategory") categories];
 	NSInteger count = categories.count;
 	NSMutableArray *keys = [NSMutableArray arrayWithCapacity:count];
 	int index = 0;
@@ -634,7 +630,7 @@ static NSMutableArray *_categories;
 		_categories = [_array retain];
 		int categoryType = 0;
 		do {
-			UIKeyboardEmojiCategory *category = [[[$UIKeyboardEmojiCategory alloc] init] autorelease];
+			UIKeyboardEmojiCategory *category = [[[NSClassFromString(@"UIKeyboardEmojiCategory") alloc] init] autorelease];
 			category.categoryType = categoryType;
 			[_categories addObject:category];
 			++categoryType;
@@ -647,7 +643,7 @@ static NSMutableArray *_categories;
 {
 	NSString *name = nil;
 	int categoryType = self.categoryType;
-	if (categoryType < [$UIKeyboardEmojiCategory numberOfCategories]) {
+	if (categoryType < [NSClassFromString(@"UIKeyboardEmojiCategory") numberOfCategories]) {
 		switch (categoryType) {
 			case 0:
 				name = @"UIKeyboardEmojiCategoryRecent";
@@ -682,7 +678,7 @@ static NSMutableArray *_categories;
 {
 	NSString *name = nil;
 	int categoryType = self.categoryType;
-	if (categoryType < [$UIKeyboardEmojiCategory numberOfCategories]) {
+	if (categoryType < [NSClassFromString(@"UIKeyboardEmojiCategory") numberOfCategories]) {
 		switch (categoryType) {
 			case 0:
 				name = @"Recents Category";
@@ -710,14 +706,14 @@ static NSMutableArray *_categories;
 				break;
 		}
 	}
-	return [$UIKeyboardEmojiCategory localizedStringForKey:name];
+	return [NSClassFromString(@"UIKeyboardEmojiCategory") localizedStringForKey:name];
 }
 
 - (NSString *)displaySymbol
 {
 	NSString *symbol = nil;
 	int categoryType = self.categoryType;
-	if (categoryType < [$UIKeyboardEmojiCategory numberOfCategories]) {
+	if (categoryType < [NSClassFromString(@"UIKeyboardEmojiCategory") numberOfCategories]) {
 		switch (categoryType) {
 			case 3:
 				symbol = @"emoji_food-and-drink.png";
@@ -1056,9 +1052,6 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %ctor
 {
-	$UIKeyboardEmoji = NSClassFromString(@"UIKeyboardEmoji");
-	$UIKeyboardEmojiCategory = NSClassFromString(@"UIKeyboardEmojiCategory");
-	$UIKeyboardEmojiGraphics = NSClassFromString(@"UIKeyboardEmojiGraphics");
 	MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
 	UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
 	%init;
