@@ -695,7 +695,7 @@ static NSMutableArray *_categories;
 	return name;
 }
 
-- (NSString *)displaySymbol
+/*- (NSString *)displaySymbol
 {
 	NSString *symbol = nil;
 	int categoryType = self.categoryType;
@@ -722,7 +722,7 @@ static NSMutableArray *_categories;
 		}
 	}
 	return symbol;
-}
+}*/
 
 + (UIKeyboardEmojiCategory *)categoryForType:(int)categoryType
 {
@@ -951,6 +951,8 @@ static BOOL isSkinTone(NSString *skin)
 
 %end
 
+%group iOS8
+
 %hook UIKeyboardImpl
 
 extern "C" UIKeyboardInputMode *UIKeyboardGetCurrentInputMode();
@@ -976,6 +978,33 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %end
 
+%end
+
+%group iOS7
+
+%hook UIKeyboardImpl
+
+- (void)_resizeForKeyplaneSize:(CGSize)size
+{
+	Class layoutClass = [UIKeyboardImpl layoutClassForCurrentInputMode];
+	if (layoutClass == objc_getClass("UIKeyboardLayoutStar")) {
+		UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:[[self _layout] orientation]];
+		UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
+		NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
+		UIKBTree *tree = [layoutClass keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
+		if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
+			UIKBShape *shape = tree.shape;
+			CGFloat height = getKeyboardHeight(name);
+			CGRect newFrame = CGRectMake(shape.frame.origin.x, shape.frame.origin.y, shape.frame.size.width, height);
+			size = newFrame.size;
+		}
+	}
+	%orig(size);
+}
+
+%end
+
+%end
 
 %ctor
 {
@@ -987,6 +1016,11 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 	%init;
 	if (isiOS7Up) {
 		%init(iOS7Up);
+		if (isiOS8Up) {
+			%init(iOS8);
+		} else {
+			%init(iOS7);
+		}
 	} else {
 		%init(preiOS7);
 	}
