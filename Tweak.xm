@@ -254,13 +254,8 @@ BOOL added4;
 static CGFloat getHeight(NSString *name, CGFloat chocoL, CGFloat chocoP, CGFloat truffleL, CGFloat truffleP, CGFloat l, CGFloat p)
 {
 	CGFloat height = 0.0f;
-	int mode = 0;
 	BOOL isPortrait = [name rangeOfString:@"Portrait"].location != NSNotFound;
-	if (isPortrait)
-		mode = 0;
 	BOOL isLandscape = [name rangeOfString:@"Landscape"].location != NSNotFound || [name rangeOfString:@"Caymen"].location != NSNotFound;
-	if (isLandscape)
-		mode = 1;
 	BOOL choco = [name rangeOfString:@"Choco"].location != NSNotFound;
 	BOOL truffle = [name rangeOfString:@"Truffle"].location != NSNotFound;
 	if (choco) {
@@ -667,7 +662,7 @@ static NSMutableArray *_categories;
 	if (categoryType < [$UIKeyboardEmojiCategory numberOfCategories]) {
 		switch (categoryType) {
 			case 0:
-				name = @"Frequently Used Category";
+				name = @"Recents Category";
 				break;
 			case 1:
 				name = @"People Category";
@@ -692,37 +687,36 @@ static NSMutableArray *_categories;
 				break;
 		}
 	}
-	return name;
+	return [self localizedStringForKey:name];
 }
 
-/*- (NSString *)displaySymbol
+- (NSString *)displaySymbol
 {
 	NSString *symbol = nil;
 	int categoryType = self.categoryType;
 	if (categoryType < [$UIKeyboardEmojiCategory numberOfCategories]) {
 		switch (categoryType) {
 			case 3:
-				symbol = ((UIKeyboardEmoji *)self.emoji[5]).emojiString;
+				symbol = @"emoji_food-and-drink.png";
 				break;
 			case 4:
-				symbol = ((UIKeyboardEmoji *)self.emoji[3]).emojiString;
+				symbol = @"emoji_celebration.png";
 				break;
 			case 5:
-				symbol = ((UIKeyboardEmoji *)self.emoji[0]).emojiString;
+				symbol = @"emoji_activity.png";
 				break;
 			case 6:
-				symbol = ((UIKeyboardEmoji *)self.emoji[2]).emojiString;
+				symbol = @"emoji_travel-and-places.png";
 				break;
 			case 7:
-				symbol = ((UIKeyboardEmoji *)self.emoji[0]).emojiString;
+				symbol = @"emoji_objects-and-symbols.png";
 				break;
 			default:
-				symbol = %orig;
-				break;
+				return %orig;
 		}
 	}
 	return symbol;
-}*/
+}
 
 + (UIKeyboardEmojiCategory *)categoryForType:(int)categoryType
 {
@@ -982,27 +976,58 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %group iOS7
 
-%hook UIKeyboardImpl
+/*%hook UIKeyboardImpl
 
-- (void)_resizeForKeyplaneSize:(CGSize)size
++ (CGSize)sizeForInterfaceOrientation:(int)orientation
 {
-	Class layoutClass = [UIKeyboardImpl layoutClassForCurrentInputMode];
-	if (layoutClass == objc_getClass("UIKeyboardLayoutStar")) {
-		UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:[[self _layout] orientation]];
-		UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
-		NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
-		UIKBTree *tree = [layoutClass keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
-		if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
-			UIKBShape *shape = tree.shape;
-			CGFloat height = getKeyboardHeight(name);
-			CGRect newFrame = CGRectMake(shape.frame.origin.x, shape.frame.origin.y, shape.frame.size.width, height);
-			size = newFrame.size;
-		}
+	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
+	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:orientation];
+	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
+	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
+}
+
++ (CGSize)keyboardSizeForInterfaceOrientation:(int)orientation
+{
+	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
+	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:orientation];
+	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
+	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
+}
+
++ (CGSize)keyboardSizeForInputMode:(UIKeyboardInputMode *)inputMode screenTraits:(UIKBScreenTraits *)screenTraits
+{
+	int orientation = MSHookIvar<int>(self, "m_orientation");
+	NSString *name = UIKeyboardGetKBStarName(inputMode, screenTraits, 0, 0);
+	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
+}
+
+%end
+
+%hook UIKeyboardLayoutStar
+
+- (void)resizeForKeyplaneSize:(CGSize)size
+{
+	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:[[%c(UIKeyboard) activeKeyboard] interfaceOrientation]];
+	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
+	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
+	UIKBTree *tree = [%c(UIKeyboardLayoutStar) keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
+	if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
+		UIKBShape *shape = tree.shape;
+		CGFloat height = getKeyboardHeight(name);
+		CGRect newFrame = CGRectMake(shape.frame.origin.x, shape.frame.origin.y, shape.frame.size.width, height);
+		size = newFrame.size;
 	}
 	%orig(size);
 }
 
-%end
++ (CGSize)keyboardSizeForInputMode:(UIKeyboardInputMode *)inputMode screenTraits:(UIKBScreenTraits *)screenTraits
+{
+	int orientation = MSHookIvar<int>([UIKeyboardImpl activeInstance], "m_orientation");
+	NSString *name = UIKeyboardGetKBStarName(inputMode, screenTraits, 0, 0);
+	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
+}
+
+%end*/
 
 %end
 
