@@ -2,7 +2,6 @@
 theos
 _
 .theos
-*.deb
 obj
 emoji
 *.old

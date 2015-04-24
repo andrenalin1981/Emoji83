@@ -1,19 +1,21 @@
 #import "Emoji.h"
 #import <CoreGraphics/CoreGraphics.h>
+#import <CoreText/CoreText.h>
 
-static NSString *emojiFromUnicode(UniChar *unicode)
+static NSString *emojiFromUnicode(unsigned long unicode)
 {
-	NSString *_emoji = [[NSString alloc] initWithBytes:&unicode length:sizeof(unicode) encoding:NSUTF32LittleEndianStringEncoding];
-	NSString *emoji = _emoji;
-	[_emoji release];
-	return emoji;
-	//return [NSString stringWithUnichar:unicode];
+	if (isiOS7Up)
+		return [NSString stringWithUnichar:unicode];
+	NSString *emoji = [[NSString alloc] initWithBytes:&unicode length:sizeof(unicode) encoding:NSUTF32LittleEndianStringEncoding];
+	NSString *_emoji = emoji.copy;
+	[emoji autorelease];
+	return _emoji;
 }
 
-static UniChar *_unicodeFromEmoji(NSString *emoji)
+static unsigned long *_unicodeFromEmoji(NSString *emoji)
 {
 	NSData *data = [emoji dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
-	UniChar *unicode;
+	unsigned long *unicode;
 	[data getBytes:&unicode length:sizeof(unicode)];
 	return unicode;
 }
@@ -24,11 +26,11 @@ Class $UIKeyboardEmojiGraphics;
 
 static UIKeyboardEmoji *emojiFromString(NSString *myEmoji)
 {
+	UIKeyboardEmoji *emo = nil;
 	unichar unicode = [myEmoji characterAtIndex:0];
 	BOOL dingbat = unicode == 0x261d || unicode == 0x270c;
-	UIKeyboardEmoji *emo = [$UIKeyboardEmoji respondsToSelector:@selector(emojiWithString:hasDingbat:)] ?
-									[$UIKeyboardEmoji emojiWithString:myEmoji hasDingbat:dingbat] :
-									[$UIKeyboardEmoji emojiWithString:myEmoji];
+	emo = [$UIKeyboardEmoji respondsToSelector:@selector(emojiWithString:hasDingbat:)] ? [$UIKeyboardEmoji emojiWithString:myEmoji hasDingbat:dingbat]
+			: [$UIKeyboardEmoji emojiWithString:myEmoji];
 	return emo;
 }
 
@@ -283,12 +285,12 @@ static CGFloat scale()
 
 static CGFloat getScrollViewHeight(NSString *name)
 {
-	return getHeight(name, 157.0f, 211.0f, 375.0f/scale(), 576.0f/scale(), 122.0f, 202.0f);
+	return getHeight(name, 157.0f, 211.0f, 375.0f/scale(), 576.0f/scale(), 122.0f, 216.0f);
 }
 
 static CGFloat getBarHeight(NSString *name)
 {
-	return getHeight(name, 37.0f, 47.0f, 111.0f/scale(), 102.0f/scale(), 40.0f, 51.0f);
+	return getHeight(name, 37.0f, 47.0f, 111.0f/scale(), 102.0f/scale(), 40.0f, 37.0f);
 }
 
 static CGFloat getKeyboardHeight(NSString *name)
@@ -330,6 +332,7 @@ static CGFloat getKeyboardHeight(NSString *name)
 		CGFloat paddedDeltaHeight;
 		CGRect oldPaddedFrame;
 		CGRect correctFrame;
+		CGFloat height2 = getBarHeight(keyplaneName);
 		if ([keyName isEqualToString:@"Emoji-Category-Control-Key"]) {
 			NSArray *_geometries = traits.variantGeometries;
 			NSMutableArray *geometries = [NSMutableArray arrayWithArray:_geometries];
@@ -337,7 +340,7 @@ static CGFloat getKeyboardHeight(NSString *name)
 			if (count > 1) {
 				CGRect barFrame = key.frame;
 				CGFloat barWidth = barFrame.size.width;
-				CGFloat correctGeometryWidth = (CGFloat)(barWidth / count);
+				CGFloat correctGeometryWidth = barWidth / count;
 				CGFloat startX = ((UIKBRenderGeometry *)_geometries[0]).frame.origin.x;
 				for (int index = 0; index < count; index++) {
 					UIKBRenderGeometry *geometry = _geometries[index];
@@ -346,13 +349,13 @@ static CGFloat getKeyboardHeight(NSString *name)
 					paddedDeltaPosY = geometry.paddedFrame.origin.y - geometry.frame.origin.y;
 					paddedDeltaWidth = geometry.paddedFrame.size.width - geometry.frame.size.width;
 					paddedDeltaHeight = geometry.paddedFrame.size.height - geometry.frame.size.height;
-					correctFrame = CGRectMake(correctGeometryPosX, geometry.frame.origin.y, correctGeometryWidth, geometry.frame.size.height);
+					correctFrame = CGRectMake(correctGeometryPosX, geometry.frame.origin.y, correctGeometryWidth, height2);
 					geometry.frame = correctFrame;
 					geometry.displayFrame = correctFrame;
-					geometry.paddedFrame = correctFrame;
 					CGRect symbolFrame = geometry.symbolFrame;
-					CGRect correctSymbolFrame = CGRectMake(correctGeometryPosX, symbolFrame.origin.y, correctGeometryWidth, symbolFrame.size.height);
+					CGRect correctSymbolFrame = CGRectMake(correctGeometryPosX, symbolFrame.origin.y, correctGeometryWidth, height2);
 					geometry.symbolFrame = correctSymbolFrame;
+					geometry.paddedFrame = correctFrame;
 					oldPaddedFrame = geometry.paddedFrame;
 					geometry.paddedFrame = CGRectMake(oldPaddedFrame.origin.x + paddedDeltaPosX, oldPaddedFrame.origin.y + paddedDeltaPosY, oldPaddedFrame.size.width + paddedDeltaWidth, oldPaddedFrame.size.height + paddedDeltaHeight);
 					geometries[index] = geometry;
@@ -364,8 +367,7 @@ static CGFloat getKeyboardHeight(NSString *name)
 			UIKBRenderGeometry *inputGeometry = traits.geometry;
 			if (inputGeometry && key.state != 16) {
 				CGFloat height = getScrollViewHeight(keyplaneName);
-				CGFloat height2 = getBarHeight(keyplaneName);
-				CGRect displayFrame = inputGeometry.displayFrame;
+				//CGRect displayFrame = inputGeometry.displayFrame;
 				CGRect frame = inputGeometry.frame;
 				oldPaddedFrame = inputGeometry.paddedFrame;
 				paddedDeltaPosX = oldPaddedFrame.origin.x - frame.origin.x;
@@ -448,26 +450,44 @@ static CGFloat getKeyboardHeight(NSString *name)
 
 %end
 
-%hook UIKeyboardEmojiCategoryBar // Emoji-Category-Control-Key !
+static UIImage *emojiCategoryBar(CGRect frame, NSString *imageName, BOOL pressed)
+{
+	return [$UIKeyboardEmojiGraphics imageWithRect:frame name:imageName pressed:pressed];
+}
+
+static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, BOOL pressed)
+{
+	CGRect frame = self ? self.frame : CGRectZero;
+	NSMutableArray *array = [NSMutableArray array];
+	[array addObject:emojiCategoryBar(frame, @"categoryRecents", pressed)];
+	[array addObject:emojiCategoryBar(frame, @"categoryPeople", pressed)];
+	[array addObject:emojiCategoryBar(frame, @"categoryNature", pressed)];
+	[array addObject:emojiCategoryBar(frame, @"categoryFoodAndDrink", pressed)];
+	[array addObject:emojiCategoryBar(frame, @"categoryActivity", pressed)];
+	[array addObject:emojiCategoryBar(frame, @"categoryObjects", pressed)];
+	[array addObject:emojiCategoryBar(frame, @"categoryPlaces", pressed)];
+	[array addObject:emojiCategoryBar(frame, @"categorySymbols", pressed)];
+	return array;
+}
+
+%group iOS7Up
+
+%hook UIKeyboardEmojiCategoryBar
 
 - (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
 {
 	CGFloat height = getScrollViewHeight(keyplane.name);
-	if (height > 0.0f) {
-		UIKBShape *shape = key.shape;
-		if (shape) {
-			CGFloat height2 = getBarHeight(keyplane.name);
-			if (height2 > 0.0f) {
-				CGRect newFrame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
-				shape.frame = newFrame;
-				key.shape = shape;
-				frame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
-			}
-		}
+	UIKBShape *shape = key.shape;
+	if (shape) {
+		CGFloat height2 = getBarHeight(keyplane.name);
+		CGRect newFrame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
+		shape.frame = newFrame;
+		key.shape = shape;
+		frame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
 	}
 	self = %orig(frame, keyplane, key);
 	if (self) {
-		if ([UIKBRenderFactory _enabled]) {
+		if ([%c(UIKBRenderFactory) _enabled]) {
 			UIKBTree *_key = MSHookIvar<UIKBTree *>(self, "m_key");
 			[key.subtrees removeAllObjects];
 			NSArray *categories = [$UIKeyboardEmojiCategory categories];
@@ -521,25 +541,9 @@ static CGFloat getKeyboardHeight(NSString *name)
 
 %end
 
-static UIImage *emojiCategoryBar(CGRect frame, NSString *imageName, BOOL pressed)
-{
-	return [$UIKeyboardEmojiGraphics imageWithRect:frame name:imageName pressed:pressed];
-}
+%end
 
-static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, BOOL pressed)
-{
-	CGRect frame = self ? self.frame : CGRectZero;
-	NSMutableArray *array = [NSMutableArray array];
-	[array addObject:emojiCategoryBar(frame, @"categoryRecents", pressed)];
-	[array addObject:emojiCategoryBar(frame, @"categoryPeople", pressed)];
-	[array addObject:emojiCategoryBar(frame, @"categoryNature", pressed)];
-	[array addObject:emojiCategoryBar(frame, @"categoryFoodAndDrink", pressed)];
-	[array addObject:emojiCategoryBar(frame, @"categoryActivity", pressed)];
-	[array addObject:emojiCategoryBar(frame, @"categoryObjects", pressed)];
-	[array addObject:emojiCategoryBar(frame, @"categoryPlaces", pressed)];
-	[array addObject:emojiCategoryBar(frame, @"categorySymbols", pressed)];
-	return array;
-}
+%group preiOS7
 
 %hook UIKeyboardEmojiCategoryBar_iPhone
 
@@ -555,6 +559,42 @@ static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, 
 	[selectedImages retain];
 	[unselectedImages retain];
 	%orig;
+}
+
+%end
+
+%end
+
+%hook UIKeyboardEmojiCategoryBar_iPhone
+
+- (void)updateSegmentImages
+{
+	%orig;
+	NSArray *selectedImages = MSHookIvar<NSArray *>(self, "_selectedImages");
+	NSArray *unselectedImages = MSHookIvar<NSArray *>(self, "_unselectedImages");
+	[selectedImages release];
+	selectedImages = emojiCategoryBarImages(self, YES);
+	[unselectedImages release];
+	unselectedImages = emojiCategoryBarImages(self, NO);
+	[selectedImages retain];
+	[unselectedImages retain];
+	%orig;
+}
+
+%end
+
+%hook UIKeyboardEmojiGraphics
+
+%new
+- (UIImage *)categoryFoodAndDrinkGenerator:(id)arg
+{
+	return [self categoryObjectsGenerator:arg];
+}
+
+%new
+- (UIImage *)categoryActivityGenerator:(id)arg
+{
+	return [self categoryPlacesGenerator:arg];
 }
 
 %end
@@ -697,8 +737,9 @@ static NSMutableArray *_categories;
 	NSString *emojiString = nil;
 	NSArray *familiesEmoji = nil;
 	UIKeyboardEmoji *emoji = nil;
-	int emojiCount = 136; // all + vulcan
+	int emojiCount = 136; // all (135) + vulcan (1)
 	unsigned long *emojiArray = PeopleEmoji;
+	//NSArray *emojiArrayLegacy = PeopleEmoji_Legacy();
 	switch (categoryType) {
 		case 0:
 			recentEmoji = [self emojiRecentsFromPreferences];
@@ -706,26 +747,32 @@ static NSMutableArray *_categories;
 		case 2:
 			emojiCount = 125; // all
 			emojiArray = NatureEmoji;
+			//emojiArrayLegacy = NatureEmoji_Legacy();
 			break;
 		case 3:
 			emojiCount = 58; // all
 			emojiArray = FoodAndDrinkEmoji;
+			//emojiArrayLegacy = FoodAndDrinkEmoji_Legacy();
 			break;
 		case 4:
 			emojiCount = 39; // all
 			emojiArray = CelebrationEmoji;
+			//emojiArrayLegacy = CelebrationEmoji_Legacy();
 			break;
 		case 5:
 			emojiCount = 53; // all
 			emojiArray = ActivityEmoji;
+			//emojiArrayLegacy = ActivityEmoji_Legacy();
 			break;
 		case 6:
 			emojiCount = 122; // some extra flags left
 			emojiArray = TravelAndPlacesEmoji;
+			//emojiArrayLegacy = TravelAndPlacesEmoji_Legacy();
 			break;
 		case 7:
 			emojiCount = 345; // all
 			emojiArray = ObjectsAndSymbolsEmoji;
+			//emojiArrayLegacy = ObjectsAndSymbolsEmoji_Legacy();
 			break;
 		case 8:
 			emojiCount = 30; // Apple seems don't use this
@@ -744,6 +791,9 @@ static NSMutableArray *_categories;
 	int index = 0;
 	unsigned long _emojiUnicode;
 	unsigned long emojiUnicode;
+	/*CTFontRef font = NULL;
+	if (!isiOS7Up)
+		font = CTFontCreateWithName(CFSTR("AppleColorEmoji"), 12.0f, NULL);*/
 	do {
 		_emojiUnicode = emojiArray[2 * index];
 		emojiUnicode = emojiArray[(2 * index) + 1];
@@ -760,7 +810,7 @@ static NSMutableArray *_categories;
 			}
 			else {
 				if (_emojiUnicode != 0x1F46A) {
-					emojiString = [NSString stringWithUnichar:_emojiUnicode];
+					emojiString = emojiFromUnicode(_emojiUnicode);
 				} else {
 					emojiString = @"👪";
 					familiesEmoji = families();
@@ -774,22 +824,47 @@ static NSMutableArray *_categories;
 		else {
 			BOOL dingbat = _emojiUnicode == 0x261D || _emojiUnicode == 0x270C;
 			if (!dingbat) {
-				NSString *unicharEmojiString = [NSString stringWithUnichar:_emojiUnicode];
+				NSString *unicharEmojiString = emojiFromUnicode(_emojiUnicode);
 				if (emojiUnicode != 0xFE0F) {
-					NSString *emojiString2 = [NSString stringWithUnichar:emojiUnicode];
+					NSString *emojiString2 = emojiFromUnicode(emojiUnicode);
 					emojiString = [NSString stringWithFormat:@"%@%@", unicharEmojiString, emojiString2];
 				}
 			} else
-				emojiString = [NSString stringWithUnichar:_emojiUnicode];
+				emojiString = emojiFromUnicode(_emojiUnicode);
 			emoji = emojiFromString(emojiString);
 		}
 		if (emoji == nil)
 			++index;
 		else {
+			/*if (!isiOS7Up) {
+				NSString *string = emojiString;
+				NSDictionary *attributes = @{NSFontAttributeName : (id)font};
+				NSAttributedString *_string = [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
+				CTLineRef line = CTLineCreateWithAttributedString((CFAttributedStringRef)_string);
+				if (line) {
+					CFArrayRef glyphRuns = CTLineGetGlyphRuns(line);
+					if (glyphRuns) {
+						const UniChar *chars;
+						chars = CFStringGetCharactersPtr((CFStringRef)@"🎀 🎁 🎂 🎃 🎄 🎋 🎍 🎑 🎆 🎇 🎉 🎊 🎈 💫 ✨ 💥 🎓 👑 🎎 🎏 🎐 🎌");
+						if (chars) {
+							unsigned short idx = 0;
+							do {
+								NSLog(@"%x %x %x", chars[idx], emojiUnicode, _emojiUnicode);
+								if (chars[idx] == _emojiUnicode) {
+									emoji.glyph = idx;
+								}
+								++idx;
+							} while (idx < emojiCount);
+						}
+
+					}
+				}*/
 			[_emojiArray addObject:emoji];
 			++index;
 		}
 	} while (index < emojiCount);
+	/*if (font)
+		CFRelease(font);*/
 	if (_emojiArray)
 		categoryForType.emoji = _emojiArray;
 	return categoryForType;
@@ -862,15 +937,13 @@ static BOOL isSkinTone(NSString *skin)
 	BOOL emoji = [key.name isEqualToString:@"Emoji-InputView-Key"];
 	if (key && [keyplaneName rangeOfString:@"Emoji"].location != NSNotFound && emoji) {
 		UIKBShape *shape2 = key.shape;
-		CGFloat height2 = getScrollViewHeight(keyplaneName);
-		if (height2 > 0.0f) {
-			CGRect newFrame2 = CGRectMake(shape2.frame.origin.x, shape2.frame.origin.y, shape2.frame.size.width, height2);
-			shape2.frame = newFrame2;
-			CGRect paddedFrame2 = CGRectMake(shape2.paddedFrame.origin.x, shape2.paddedFrame.origin.y, shape2.paddedFrame.size.width, height2);
-			shape2.paddedFrame = paddedFrame2;
-			key.shape = shape2;
-			frame = CGRectMake(frame.origin.x, frame.origin.y, frame.size.width, height2);
-		}
+		CGFloat height = getScrollViewHeight(keyplaneName);
+		CGRect newFrame2 = CGRectMake(shape2.frame.origin.x, shape2.frame.origin.y, shape2.frame.size.width, height);
+		shape2.frame = newFrame2;
+		CGRect paddedFrame2 = CGRectMake(shape2.paddedFrame.origin.x, shape2.paddedFrame.origin.y, shape2.paddedFrame.size.width, height);
+		shape2.paddedFrame = paddedFrame2;
+		key.shape = shape2;
+		frame = CGRectMake(frame.origin.x, frame.origin.y, frame.size.width, height);
 	}
 	id orig = %orig(frame, keyplane, key);
 	return orig;
@@ -887,17 +960,15 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 {
 	Class layoutClass = [UIKeyboardImpl layoutClassForCurrentInputMode];
 	if (layoutClass == objc_getClass("UIKeyboardLayoutStar")) {
-		UIKBScreenTraits *screenTraits = [UIKBScreenTraits traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:[[self _layout] orientation]];
+		UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:[[self _layout] orientation]];
 		UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
 		NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
 		UIKBTree *tree = [layoutClass keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
 		if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
 			UIKBShape *shape = tree.shape;
 			CGFloat height = getKeyboardHeight(name);
-			if (height > 0.0f) {
-				CGRect newFrame = CGRectMake(shape.frame.origin.x, shape.frame.origin.y, shape.frame.size.width, height);
-				size = newFrame.size;
-			}
+			CGRect newFrame = CGRectMake(shape.frame.origin.x, shape.frame.origin.y, shape.frame.size.width, height);
+			size = newFrame.size;
 		}
 	}
 	%orig(size, changed);
@@ -914,4 +985,9 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 	MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
 	UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
 	%init;
+	if (isiOS7Up) {
+		%init(iOS7Up);
+	} else {
+		%init(preiOS7);
+	}
 }
