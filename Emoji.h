@@ -141,6 +141,10 @@
 - (NSString *)key; // emojiString
 @end
 
+@interface UIKeyboardEmojiPage : UIView
+- (CGRect)rectForRow:(int)row Col:(int)col;
+@end
+
 @interface UIKeyboardEmojiImageView : UIImageView
 @end
 

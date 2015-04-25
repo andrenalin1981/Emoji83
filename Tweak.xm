@@ -229,15 +229,6 @@ BOOL added4;
 
 %end
 
-/*%hook UIKeyboardEmojiView
-
-- (void)createAndInstallKeyPopupView
-{
-	%orig;
-}
-
-%end*/
-
 /*%hook UIKeyboardEmojiGraphics
 
 - (UIImage *)generateImageWithRect:(CGRect)rect name:(NSString *)name pressed:(BOOL)pressed
@@ -924,6 +915,15 @@ static BOOL isSkinTone(NSString *skin)
 
 %end
 
+%hook UIKeyboardEmojiPage
+
+- (void)drawRect:(CGRect)rect
+{
+	%orig;	
+}
+
+%end
+
 %hook UIKeyboardEmojiScrollView
 
 - (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
@@ -1032,6 +1032,16 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %end
 
+%hook UIKeyboardEmojiView
+
+- (void)createAndInstallKeyPopupView
+{
+	%orig;
+	
+}
+
+%end
+
 extern "C" UIImage *_UIImageWithName(NSString *name);
 MSHook(UIImage *, _UIImageWithName, NSString *name)
 {
@@ -1042,20 +1052,44 @@ MSHook(UIImage *, _UIImageWithName, NSString *name)
 	return __UIImageWithName(name);
 }
 
+/*MSHook(NSArray *, getFlickPopupInfoArray, id arg1, NSString *key)
+{
+	NSArray *orig = _getFlickPopupInfoArray(arg1, key);
+	NSLog(@"%@ %@ -> %@", arg1, key, orig);
+	return orig;
+}*/
+
 %ctor
 {
-	MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
-	UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
-	%init;
-	MSHookFunction(_UIImageWithName, MSHake(_UIImageWithName));
-	if (isiOS7Up) {
-		%init(iOS7Up);
-		if (isiOS8Up) {
-			%init(iOS8);
-		} else {
-			%init(iOS7);
+	NSArray *args = [[NSClassFromString(@"NSProcessInfo") processInfo] arguments];
+	NSUInteger count = args.count;
+	if (count != 0) {
+		NSString *executablePath = args[0];
+		if (executablePath) {
+			BOOL isApplication = [executablePath rangeOfString:@"/Application"].location != NSNotFound;
+			BOOL isSpringBoard = [[executablePath lastPathComponent] isEqualToString:@"SpringBoard"];
+			if (isApplication || isSpringBoard) {
+				MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
+				UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
+				%init;
+				//NSArray *(*getFlickPopupInfoArray)(id, NSString *) = (NSArray *(*)(id, NSString *))MSFindSymbol(ref, "_getFlickPopupInfoArray");
+				//MSHookFunction(getFlickPopupInfoArray, MSHake(getFlickPopupInfoArray));
+				MSHookFunction(_UIImageWithName, MSHake(_UIImageWithName));
+				/*MSHookFunction(CGContextSetTextMatrix, MSHake(CGContextSetTextMatrix));
+				MSHookFunction(CGAffineTransformMakeTranslation, MSHake(CGAffineTransformMakeTranslation));
+				MSHookFunction(CGContextConcatCTM, MSHake(CGContextConcatCTM));*/
+				//dlopen("/System/Library/PrivateFrameworks/TextInput.framework/TextInput", RTLD_LAZY);
+				if (isiOS7Up) {
+					%init(iOS7Up);
+					if (isiOS8Up) {
+						%init(iOS8);
+					} else {
+						%init(iOS7);
+					}
+				} else {
+					%init(preiOS7);
+				}
+			}
 		}
-	} else {
-		%init(preiOS7);
 	}
 }
