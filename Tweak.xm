@@ -881,7 +881,7 @@ static BOOL isSkinTone(NSString *skin)
 	BOOL fam4 = NO;
 	if ([self respondsToSelector:@selector(inputDelegate)]) {
 		id inputDelegate = [self inputDelegate];
-		if ([inputDelegate respondsToSelctor:@selector(text)]) {
+		if ([inputDelegate respondsToSelector:@selector(text)]) {
 			NSString *text = [inputDelegate text];
 			if (text) {
 				NSUInteger length = text.length;
