@@ -461,6 +461,20 @@ static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, 
 	return array;
 }
 
+static NSArray *extraIcons()
+{
+	NSMutableArray *array = [NSMutableArray arrayWithCapacity:8];
+	[array addObject:@"emoji_recents.png"];
+	[array addObject:@"emoji_people.png"];
+	[array addObject:@"emoji_nature.png"];
+	[array addObject:@"emoji_food-and-drink.png"];
+	[array addObject:@"emoji_celebration.png"];
+	[array addObject:@"emoji_activity.png"];
+	[array addObject:@"emoji_travel-and-places.png"];
+	[array addObject:@"emoji_objects-and-symbols.png"];
+	return array;
+}
+
 %group iOS7Up
 
 static void aHook(UIKeyboardEmojiCategoryBar *self, UIKBTree *key)
@@ -477,34 +491,7 @@ static void aHook(UIKeyboardEmojiCategoryBar *self, UIKBTree *key)
 		int categoryType = category.categoryType;
 		NSString *image = nil;
 		if (categoryType < count) {
-			switch (categoryType) {
-				case 0:
-					image = @"emoji_recents.png";
-					break;
-				case 1:
-					image = @"emoji_people.png";
-					break;
-				case 2:
-					image = @"emoji_nature.png";
-					break;
-				case 3:
-					image = @"emoji_food-and-drink.png";
-					break;
-				case 4:
-					image = @"emoji_celebration.png";
-					break;
-				case 5:
-					image = @"emoji_activity.png";
-					break;
-				case 6:
-					image = @"emoji_travel-and-places.png";
-					break;
-				case 7:
-					image = @"emoji_objects-and-symbols.png";
-					break;
-				default:
-					break;
-			}
+			image = extraIcons()[categoryType];
 			emojiKey.displayString = image;
 			[keys addObject:[emojiKey autorelease]];
 		}
@@ -711,30 +698,10 @@ static NSMutableArray *_categories;
 
 - (NSString *)displaySymbol
 {
-	NSString *symbol = nil;
 	int categoryType = self.categoryType;
-	if (categoryType < [NSClassFromString(@"UIKeyboardEmojiCategory") numberOfCategories]) {
-		switch (categoryType) {
-			case 3:
-				symbol = @"emoji_food-and-drink.png";
-				break;
-			case 4:
-				symbol = @"emoji_celebration.png";
-				break;
-			case 5:
-				symbol = @"emoji_activity.png";
-				break;
-			case 6:
-				symbol = @"emoji_travel-and-places.png";
-				break;
-			case 7:
-				symbol = @"emoji_objects-and-symbols.png";
-				break;
-			default:
-				return %orig;
-		}
-	}
-	return symbol;
+	if (categoryType < [NSClassFromString(@"UIKeyboardEmojiCategory") numberOfCategories])
+		return extraIcons()[categoryType];
+	return %orig;
 }
 
 + (UIKeyboardEmojiCategory *)categoryForType:(int)categoryType
@@ -1050,11 +1017,29 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %end
 
+extern "C" UIImage *_UIImageWithName(NSString *name);
+MSHook(UIImage *, _UIImageWithName, NSString *name)
+{
+	if ([extraIcons() containsObject:name]) {
+		NSString *imageName = [name stringByReplacingOccurrencesOfString:@".png" withString:@""];
+		int scale = (int)[UIScreen mainScreen].scale;
+		BOOL oneX = NO;
+		if (scale == 1)
+			oneX = YES;
+		NSString *absoluteImageName = !oneX ? [NSString stringWithFormat:@"%@@%dx.png", imageName, scale] : [NSString stringWithFormat:@"%@.png", imageName];
+		NSString *imagePath = [NSString stringWithFormat:@"/Library/Emoji83/Emoji83.bundle/%@", absoluteImageName];
+		UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+		return image;
+	}
+	return __UIImageWithName(name);
+}
+
 %ctor
 {
 	MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
 	UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
 	%init;
+	MSHookFunction(_UIImageWithName, MSHake(_UIImageWithName));
 	if (isiOS7Up) {
 		%init(iOS7Up);
 		if (isiOS8Up) {
