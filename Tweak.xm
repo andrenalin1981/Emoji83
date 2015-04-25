@@ -247,7 +247,7 @@ BOOL added4;
 
 %end*/
 
-static CGFloat getHeight(NSString *name, CGFloat chocoL, CGFloat chocoP, CGFloat truffleL, CGFloat truffleP, CGFloat l, CGFloat p)
+static CGFloat getHeight(NSString *name, CGFloat chocoL, CGFloat chocoP, CGFloat truffleL, CGFloat truffleP, CGFloat l, CGFloat p, CGFloat padL, CGFloat padP)
 {
 	CGFloat height = 0.0f;
 	BOOL isPortrait = [name rangeOfString:@"Portrait"].location != NSNotFound;
@@ -263,8 +263,11 @@ static CGFloat getHeight(NSString *name, CGFloat chocoL, CGFloat chocoP, CGFloat
 		height = isLandscape ? truffleL : truffleP;
 	}
 	else {
-		// 3.5 and 4-inches iDevices
-		height = isLandscape ? l : p;
+		// 3.5, 4-inches iDevices or iPad
+		if (IPAD)
+			height = isLandscape ? padL : padP;
+		else
+			height = isLandscape ? l : p;
 	}
 	return height;
 }
@@ -276,17 +279,17 @@ static CGFloat scale()
 
 static CGFloat getScrollViewHeight(NSString *name)
 {
-	return getHeight(name, 157.0f, 211.0f, 375.0f/scale(), 576.0f/scale(), 122.0f, 216.0f);
+	return getHeight(name, 157.0f, 211.0f, 375.0f/scale(), 576.0f/scale(), 122.0f, 216.0f, 337.0f, 245.0f);
 }
 
 static CGFloat getBarHeight(NSString *name)
 {
-	return getHeight(name, 37.0f, 47.0f, 111.0f/scale(), 102.0f/scale(), 40.0f, 37.0f);
+	return getHeight(name, 37.0f, 47.0f, 111.0f/scale(), 102.0f/scale(), 40.0f, 37.0f, 54.0f, 58.0f);
 }
 
 static CGFloat getKeyboardHeight(NSString *name)
 {
-	return getHeight(name, 194.0f, 258.0f, 486.0f/scale(), 678.0f/scale(), 162.0f, 253.0f);
+	return getHeight(name, 194.0f, 258.0f, 486.0f/scale(), 678.0f/scale(), 162.0f, 253.0f, 391.0f, 303.0f);
 }
 
 %hook UIKBRenderGeometry
@@ -876,19 +879,26 @@ static BOOL isSkinTone(NSString *skin)
 	BOOL mmwwk = NO;
 	BOOL fam3 = NO;
 	BOOL fam4 = NO;
-	NSString *text = [[self inputDelegate] text];
-	NSUInteger length = text.length;
-	if (length >= 2) {
-		NSString *skinLike = [text substringFromIndex:length - 2];
-		skin = isSkinTone(skinLike);
-		if (length >= 8) {
-			NSString *like8 = [text substringFromIndex:length - 8];
-			mmww = [mmwws() containsObject:like8];
-			fam3 = [families() containsObject:like8];
-			if (length >= 11) {
-				NSString *like11 = [text substringFromIndex:length - 11];
-				mmwwk = [mmwwks() containsObject:like11];
-				fam4 = [families() containsObject:like11];
+	if ([self respondsToSelector:@selector(inputDelegate)]) {
+		id inputDelegate = [self inputDelegate];
+		if ([inputDelegate respondsToSelctor:@selector(text)]) {
+			NSString *text = [inputDelegate text];
+			if (text) {
+				NSUInteger length = text.length;
+				if (length >= 2) {
+					NSString *skinLike = [text substringFromIndex:length - 2];
+					skin = isSkinTone(skinLike);
+					if (length >= 8) {
+						NSString *like8 = [text substringFromIndex:length - 8];
+						mmww = [mmwws() containsObject:like8];
+						fam3 = [families() containsObject:like8];
+						if (length >= 11) {
+							NSString *like11 = [text substringFromIndex:length - 11];
+							mmwwk = [mmwwks() containsObject:like11];
+							fam4 = [families() containsObject:like11];
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1021,14 +1031,7 @@ extern "C" UIImage *_UIImageWithName(NSString *name);
 MSHook(UIImage *, _UIImageWithName, NSString *name)
 {
 	if ([extraIcons() containsObject:name]) {
-		NSString *imageName = [name stringByReplacingOccurrencesOfString:@".png" withString:@""];
-		int scale = (int)[UIScreen mainScreen].scale;
-		BOOL oneX = NO;
-		if (scale == 1)
-			oneX = YES;
-		NSString *absoluteImageName = !oneX ? [NSString stringWithFormat:@"%@@%dx.png", imageName, scale] : [NSString stringWithFormat:@"%@.png", imageName];
-		NSString *imagePath = [NSString stringWithFormat:@"/Library/Emoji83/Emoji83.bundle/%@", absoluteImageName];
-		UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+		UIImage *image = [UIImage imageNamed:name inBundle:[NSBundle bundleWithPath:@"/System/Library/Frameworks/UIKit.framework"]];
 		return image;
 	}
 	return __UIImageWithName(name);
