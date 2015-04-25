@@ -310,6 +310,11 @@ static CGFloat getKeyboardHeight(NSString *name)
 
 %end
 
+static NSArray *targetKeys()
+{
+	return @[@"Delete-Key", @"International-Key", @"Space-Key", @"Dismiss-Key"];
+}
+
 %hook UIKBRenderFactoryEmoji_iPhone
 
 - (UIKBRenderTraits *)_traitsForKey:(UIKBTree *)key onKeyplane:(UIKBTree *)keyplane
@@ -357,7 +362,7 @@ static CGFloat getKeyboardHeight(NSString *name)
 				traits.variantGeometries = geometries;
 			}
 		}
-		else if ([keyName isEqualToString:@"Delete-Key"] || [keyName isEqualToString:@"International-Key"] || [keyName isEqualToString:@"Space-Key"]) {
+		else if ([targetKeys() containsObject:keyName]) {
 			UIKBRenderGeometry *inputGeometry = traits.geometry;
 			if (inputGeometry && key.state != 16) {
 				CGFloat height = getScrollViewHeight(keyplaneName);
@@ -406,7 +411,7 @@ static CGFloat getKeyboardHeight(NSString *name)
 {
 	NSString *keyName = key.name;
 	NSString *keyplaneName = keyplane.name;
-	BOOL targetKey = [keyName isEqualToString:@"International-Key"] || [keyName isEqualToString:@"Delete-Key"] || [keyName isEqualToString:@"Space-Key"];
+	BOOL targetKey = [targetKeys() containsObject:keyName];
 	BOOL targetKeyplane = [keyplaneName rangeOfString:@"Emoji"].location != NSNotFound;
 	if (targetKey && targetKeyplane) {
 		CGRect frame = key.frame;
