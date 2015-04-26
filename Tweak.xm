@@ -704,7 +704,7 @@ static NSMutableArray *_categories;
 			//emojiArrayLegacy = ObjectsAndSymbolsEmoji_Legacy();
 			break;
 		case 8:
-			emojiCount = 58;
+			emojiCount = 57;
 			emojiArray = DiverseEmoji;
 			break;
 		case 1:
