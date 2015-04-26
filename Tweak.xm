@@ -520,27 +520,6 @@ static void aHook(UIKeyboardEmojiCategoryBar *self, UIKBTree *key)
 
 %end
 
-%hook UIKeyboardEmojiCategoryBar_iPhone
-
-- (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
-{
-	CGFloat height = getScrollViewHeight(keyplane.name);
-	UIKBShape *shape = key.shape;
-	if (shape) {
-		CGFloat height2 = getBarHeight(keyplane.name);
-		CGRect newFrame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
-		shape.frame = newFrame;
-		key.shape = shape;
-		frame = CGRectMake(shape.frame.origin.x, height, shape.frame.size.width, height2);
-	}
-	self = %orig(frame, keyplane, key);
-	aHook(self, key);
-	return self;
-}
-
-%end
-
-
 %end
 
 %group preiOS7
@@ -768,79 +747,55 @@ static NSMutableArray *_categories;
 	}
 	NSMutableArray *_emojiArray = [NSMutableArray arrayWithCapacity:emojiCount];
 	int index = 0;
-	unsigned long _emojiUnicode;
-	unsigned long emojiUnicode;
+	unsigned long _emojiUnicode = 0x0;
+	unsigned long emojiUnicode = 0x0;
 	/*CTFontRef font = NULL;
 	if (!isiOS7Up)
 		font = CTFontCreateWithName(CFSTR("AppleColorEmoji"), 12.0f, NULL);*/
 	do {
-		_emojiUnicode = emojiArray[2 * index];
-		emojiUnicode = emojiArray[(2 * index) + 1];
+		emojiString = nil;
+		emoji = nil;
+		_emojiUnicode = emojiArray[2 * index]; // emoji to be added
+		emojiUnicode = emojiArray[(2 * index) + 1]; // zero unicode check
 		if (emojiUnicode == 0x0) {
 			if (_emojiUnicode == 0x1F491) {
-				emojiString = @"💑";
+				addEmoji(_emojiArray, @"💑");
 				addEmoji(_emojiArray, mmwws()[1]);
 				addEmoji(_emojiArray, mmwws()[0]);
 			}
 			else if (_emojiUnicode == 0x1F48F) {
-				emojiString = @"💏";
+				addEmoji(_emojiArray, @"💏");
 				addEmoji(_emojiArray, mmwwks()[1]);
 				addEmoji(_emojiArray, mmwwks()[0]);
 			}
 			else {
-				if (_emojiUnicode != 0x1F46A) {
-					emojiString = emojiFromUnicode(_emojiUnicode);
-				} else {
-					emojiString = @"👪";
+				if (_emojiUnicode != 0x1F46A)
+					emojiString = [NSString stringWithUnichar:_emojiUnicode];
+				else {
+					addEmoji(_emojiArray, @"👪");
 					familiesEmoji = families();
 					for (int i = 0; i < familiesEmoji.count; i++) {
 						addEmoji(_emojiArray, familiesEmoji[i]);
 					}
 				}
 			}
-			emoji = emojiFromString(emojiString);
 		}
 		else {
 			BOOL dingbat = _emojiUnicode == 0x261D || _emojiUnicode == 0x270C;
 			if (!dingbat) {
-				NSString *unicharEmojiString = emojiFromUnicode(_emojiUnicode);
+				NSString *unicharEmojiString = [NSString stringWithUnichar:_emojiUnicode];
 				if (emojiUnicode != 0xFE0F) {
-					NSString *emojiString2 = emojiFromUnicode(emojiUnicode);
+					NSString *emojiString2 = [NSString stringWithUnichar:emojiUnicode];
 					emojiString = [NSString stringWithFormat:@"%@%@", unicharEmojiString, emojiString2];
 				}
 			} else
-				emojiString = emojiFromUnicode(_emojiUnicode);
+				emojiString = [NSString stringWithUnichar:_emojiUnicode];
+		}
+		if (emojiString)
 			emoji = emojiFromString(emojiString);
-		}
-		if (emoji == nil)
-			++index;
-		else {
-			/*if (!isiOS7Up) {
-				NSString *string = emojiString;
-				NSDictionary *attributes = @{NSFontAttributeName : (id)font};
-				NSAttributedString *_string = [[[NSAttributedString alloc] initWithString:string attributes:attributes] autorelease];
-				CTLineRef line = CTLineCreateWithAttributedString((CFAttributedStringRef)_string);
-				if (line) {
-					CFArrayRef glyphRuns = CTLineGetGlyphRuns(line);
-					if (glyphRuns) {
-						const UniChar *chars;
-						chars = CFStringGetCharactersPtr((CFStringRef)@"🎀 🎁 🎂 🎃 🎄 🎋 🎍 🎑 🎆 🎇 🎉 🎊 🎈 💫 ✨ 💥 🎓 👑 🎎 🎏 🎐 🎌");
-						if (chars) {
-							unsigned short idx = 0;
-							do {
-								NSLog(@"%x %x %x", chars[idx], emojiUnicode, _emojiUnicode);
-								if (chars[idx] == _emojiUnicode) {
-									emoji.glyph = idx;
-								}
-								++idx;
-							} while (idx < emojiCount);
-						}
-
-					}
-				}*/
+		if (emoji != nil)
 			[_emojiArray addObject:emoji];
-			++index;
-		}
+		++index;
 	} while (index < emojiCount);
 	/*if (font)
 		CFRelease(font);*/
