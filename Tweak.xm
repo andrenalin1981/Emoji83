@@ -2,16 +2,6 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreText/CoreText.h>
 
-static NSString *emojiFromUnicode(unsigned long unicode)
-{
-	if (isiOS7Up)
-		return [NSString stringWithUnichar:unicode];
-	NSString *emoji = [[NSString alloc] initWithBytes:&unicode length:sizeof(unicode) encoding:NSUTF32LittleEndianStringEncoding];
-	NSString *_emoji = emoji.copy;
-	[emoji autorelease];
-	return _emoji;
-}
-
 static unsigned long *_unicodeFromEmoji(NSString *emoji)
 {
 	NSData *data = [emoji dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
@@ -49,7 +39,7 @@ static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArr
 	}
 }
 
-static void addEmojisForIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index)
+/*static void addEmojisForIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index)
 {
 	addEmojisForIndexAtIndex(emojiObject, myEmojis, index, 0);
 }
@@ -59,21 +49,16 @@ static void addFlagEmojis(UIKeyboardEmojiCategory *emojiObject)
 	NSString *flagsString = @"🇦🇫 🇦🇱 🇩🇿 🇦🇸 🇦🇩 🇦🇴 🇦🇮 🇦🇬 🇦🇷 🇦🇲 🇦🇼 🇦🇺 🇦🇹 🇦🇿 🇧🇸 🇧🇭 🇧🇩 🇧🇧 🇧🇾 🇧🇪 🇧🇿 🇧🇯 🇧🇲 🇧🇹 🇧🇴 🇧🇦 🇧🇼 🇧🇷 🇧🇳 🇧🇬 🇧🇫 🇧🇮 🇰🇭 🇨🇲 🇨🇦 🇨🇻 🇰🇾 🇨🇫 🇨🇱 🇨🇴 🇰🇲 🇨🇩 🇨🇬 🇨🇰 🇨🇷 🇭🇷 🇨🇺 🇨🇼 🇨🇾 🇨🇿 🇩🇰 🇩🇯 🇩🇲 🇩🇴 🇪🇨 🇪🇬 🇸🇻 🇬🇶 🇪🇷 🇪🇪 🇪🇹 🇫🇴 🇫🇯 🇫🇮 🇫🇷 🇬🇫 🇹🇫 🇬🇦 🇬🇲 🇬🇪 🇬🇭 🇬🇮 🇬🇷 🇬🇩 🇬🇵 🇬🇺 🇬🇹 🇬🇳 🇬🇼 🇬🇾 🇭🇹 🇭🇳 🇭🇰 🇭🇺 🇮🇸 🇮🇳 🇮🇩 🇮🇷 🇮🇶 🇮🇪 🇮🇱 🇨🇮 🇯🇲 🇯🇴 🇰🇿 🇰🇪 🇰🇮 🇰🇼 🇰🇬 🇱🇦 🇱🇻 🇱🇧 🇱🇸 🇱🇷 🇱🇾 🇱🇮 🇱🇹 🇱🇺 🇲🇴 🇲🇰 🇲🇬 🇲🇼 🇲🇾 🇲🇻 🇲🇱 🇲🇹 🇲🇶 🇲🇷 🇲🇽 🇲🇩 🇲🇳 🇲🇪 🇲🇸 🇲🇦 🇲🇿 🇲🇲 🇳🇦 🇳🇵 🇳🇱 🇳🇨 🇳🇿 🇳🇮 🇳🇪 🇳🇬 🇳🇺 🇰🇵 🇲🇵 🇳🇴 🇴🇲 🇵🇰 🇵🇼 🇵🇸 🇵🇦 🇵🇬 🇵🇾 🇵🇪 🇵🇭 🇵🇱 🇵🇹 🇵🇷 🇶🇦 🇷🇴 🇷🇼 🇼🇸 🇸🇲 🇸🇹 🇸🇦 🇸🇳 🇷🇸 🇸🇨 🇸🇱 🇸🇬 🇸🇰 🇸🇮 🇸🇧 🇸🇴 🇿🇦 🇸🇸 🇱🇰 🇸🇩 🇸🇷 🇸🇿 🇸🇪 🇨🇭 🇸🇾 🇹🇯 🇹🇿 🇹🇭 🇹🇱 🇹🇬 🇹🇴 🇹🇹 🇹🇳 🇹🇷 🇹🇲 🇹🇨 🇹🇻 🇺🇬 🇺🇦 🇦🇪 🇺🇾 🇺🇿 🇻🇺 🇻🇪 🇻🇳 🇾🇪 🇿🇲 🇿🇼";
 	NSArray *flags = [flagsString componentsSeparatedByString:@" "];
 	addEmojisForIndex(emojiObject, flags, 4);
-}
+}*/
 
 static NSArray *families()
 {
 	return @[@"👨‍👩‍👧", @"👨‍👩‍👧‍👦", @"👨‍👩‍👦‍👦", @"👨‍👩‍👧‍👧", @"👩‍👩‍👦", @"👩‍👩‍👧", @"👩‍👩‍👧‍👦", @"👩‍👩‍👦‍👦", @"👩‍👩‍👧‍👧", @"👨‍👨‍👦", @"👨‍👨‍👧", @"👨‍👨‍👧‍👦", @"👨‍👨‍👦‍👦", @"👨‍👨‍👧‍👧"];
 }
 
-static void addFamilyEmojis(UIKeyboardEmojiCategory *emojiObject)
-{
-	addEmojisForIndexAtIndex(emojiObject, families(), 1, 129);
-}
-
 static NSString *skinnedEmoji(NSString *emoji, NSString *skin)
 {
-	NSString *_emoji = isiOS7Up ? [NSString stringWithUnichar:[emoji characterAtIndex:0]] : emoji;
+	NSString *_emoji = isiOS7Up ? [NSString stringWithUnichar:[emoji _firstLongCharacter]] : emoji; // doesn't work with iOS <= 6
 	return [NSString stringWithFormat:@"%@%@", _emoji, skin];
 }
 
@@ -151,11 +136,6 @@ static void findOriginalEmojiIndexAndAddDiversity(NSMutableArray *array, NSArray
 	}
 }
 
-static void addVulcanEmojis(UIKeyboardEmojiCategory *emojiObject)
-{
-	addEmojisForIndexAtIndex(emojiObject, @[[NSString stringWithUnichar:0x1F596]], 1, 123);
-}
-
 static void addDiverseEmojis1(UIKeyboardEmojiCategory *emojiObject)
 {
 	NSArray *emoji = emojiObject.emoji;
@@ -191,18 +171,10 @@ static NSArray *mmwwks()
 	return @[@"👨‍❤️‍💋‍👨", @"👩‍❤️‍💋‍👩"];
 }
 
-static void addMMWWEmojis(UIKeyboardEmojiCategory *emojiObject)
-{
-	addEmojisForIndexAtIndex(emojiObject, @[mmwwks()[0]], 1, 145);
-	addEmojisForIndexAtIndex(emojiObject, @[mmwwks()[1]], 1, 145);
-	addEmojisForIndexAtIndex(emojiObject, @[mmwws()[0]], 1, 148);
-	addEmojisForIndexAtIndex(emojiObject, @[mmwws()[1]], 1, 148);
-}
-
-static void updateCategory(UIKeyboardEmojiCategory *category, int type)
+/*static void updateCategory(UIKeyboardEmojiCategory *category, int type)
 {
 	[[NSClassFromString(@"UIKeyboardEmojiCategory") categories] replaceObjectAtIndex:type withObject:category];
-}
+}*/
 
 static void addEmoji(NSMutableArray *emojiArray, NSString *string)
 {
@@ -211,9 +183,9 @@ static void addEmoji(NSMutableArray *emojiArray, NSString *string)
 		[emojiArray addObject:emoji];
 }
 
-BOOL added1;
+/*BOOL added1;
 BOOL added3;
-BOOL added4;
+BOOL added4;*/
 
 %hook UIKeyboardEmojiCategoryPicker
 
@@ -229,19 +201,10 @@ BOOL added4;
 
 %end
 
-/*%hook UIKeyboardEmojiGraphics
-
-- (UIImage *)generateImageWithRect:(CGRect)rect name:(NSString *)name pressed:(BOOL)pressed
-{
-	return %orig;
-}
-
-%end*/
-
 static CGFloat getHeight(NSString *name, CGFloat chocoL, CGFloat chocoP, CGFloat truffleL, CGFloat truffleP, CGFloat l, CGFloat p, CGFloat padL, CGFloat padP)
 {
 	CGFloat height = 0.0f;
-	BOOL isPortrait = [name rangeOfString:@"Portrait"].location != NSNotFound;
+	//BOOL isPortrait = [name rangeOfString:@"Portrait"].location != NSNotFound;
 	BOOL isLandscape = [name rangeOfString:@"Landscape"].location != NSNotFound || [name rangeOfString:@"Caymen"].location != NSNotFound;
 	BOOL choco = [name rangeOfString:@"Choco"].location != NSNotFound;
 	BOOL truffle = [name rangeOfString:@"Truffle"].location != NSNotFound;
@@ -462,7 +425,7 @@ static NSMutableArray *emojiCategoryBarImages(UIKeyboardEmojiCategoryBar *self, 
 
 static NSArray *extraIcons()
 {
-	NSMutableArray *array = [NSMutableArray arrayWithCapacity:8];
+	NSMutableArray *array = [NSMutableArray arrayWithCapacity:CATEGORIES_COUNT];
 	[array addObject:@"emoji_recents.png"];
 	[array addObject:@"emoji_people.png"];
 	[array addObject:@"emoji_nature.png"];
@@ -471,6 +434,7 @@ static NSArray *extraIcons()
 	[array addObject:@"emoji_activity.png"];
 	[array addObject:@"emoji_travel-and-places.png"];
 	[array addObject:@"emoji_objects-and-symbols.png"];
+	[array addObject:@"emoji_diverse.png"]; // temporary
 	return array;
 }
 
@@ -582,7 +546,7 @@ static void aHook(UIKeyboardEmojiCategoryBar *self, UIKBTree *key)
 
 + (NSInteger)numberOfCategories
 {
-	return 8;
+	return CATEGORIES_COUNT;
 }
 
 static NSMutableArray *_categories;
@@ -634,6 +598,9 @@ static NSMutableArray *_categories;
 			case 7:
 				name = @"UIKeyboardEmojiCategoryObjectsAndSymbols";
 				break;
+			case 8:
+				name = @"UIKeyboardEmojiCategoryTemporary"; // temporary
+				break;
 		}
 	}
 	return name;
@@ -668,6 +635,9 @@ static NSMutableArray *_categories;
 				break;
 			case 7:
 				name = @"Objects & Symbols Category";
+				break;
+			case 8:
+				name = @"Diverse Category"; // temporary
 				break;
 		}
 	}
@@ -733,8 +703,8 @@ static NSMutableArray *_categories;
 			//emojiArrayLegacy = ObjectsAndSymbolsEmoji_Legacy();
 			break;
 		case 8:
-			emojiCount = 30; // Apple seems don't use this
-			emojiArray = PrePopulatedEmoji;
+			emojiCount = 59;
+			emojiArray = DiverseEmoji;
 			break;
 		case 1:
 			break;
@@ -801,15 +771,20 @@ static NSMutableArray *_categories;
 		CFRelease(font);*/
 	if (_emojiArray)
 		categoryForType.emoji = _emojiArray;
+	if (categoryType == 8) { // temporary
+		addDiverseEmojis1(categoryForType);
+		addDiverseEmojis3(categoryForType);
+	}
 	return categoryForType;
 }
 
 - (void)releaseCategories
 {
 	%orig;
-	added1 = NO;
+	[_categories removeAllObjects];
+	/*added1 = NO;
 	added3 = NO;
-	added4 = NO;
+	added4 = NO;*/
 }
 
 %end
