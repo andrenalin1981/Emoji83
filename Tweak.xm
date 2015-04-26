@@ -20,7 +20,7 @@ static UIKeyboardEmoji *emojiFromString(NSString *myEmoji)
 	return emo;
 }
 
-static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index, NSUInteger emojiIndex)
+/*static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index, NSUInteger emojiIndex)
 {
 	NSArray *emoji = emojiObject.emoji;
 	if (emoji.count != 0 && myEmojis.count != 0) {
@@ -39,7 +39,7 @@ static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArr
 	}
 }
 
-/*static void addEmojisForIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index)
+static void addEmojisForIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index)
 {
 	addEmojisForIndexAtIndex(emojiObject, myEmojis, index, 0);
 }
@@ -125,11 +125,12 @@ static void findOriginalEmojiIndexAndAddDiversity(NSMutableArray *array, NSArray
 					UIKeyboardEmoji *emo4 = emojiFromString(skin4[index]);
 					UIKeyboardEmoji *emo3 = emojiFromString(skin3[index]);
 					UIKeyboardEmoji *emo2 = emojiFromString(skin2[index]);
-					[array insertObject:emo6 atIndex:indexOfTarget + 1];
-					[array insertObject:emo5 atIndex:indexOfTarget + 1];
-					[array insertObject:emo4 atIndex:indexOfTarget + 1];
-					[array insertObject:emo3 atIndex:indexOfTarget + 1];
-					[array insertObject:emo2 atIndex:indexOfTarget + 1];
+					[array removeObjectAtIndex:indexOfTarget];
+					[array insertObject:emo6 atIndex:indexOfTarget];
+					[array insertObject:emo5 atIndex:indexOfTarget];
+					[array insertObject:emo4 atIndex:indexOfTarget];
+					[array insertObject:emo3 atIndex:indexOfTarget];
+					[array insertObject:emo2 atIndex:indexOfTarget];
 				}
 			}
 		}
@@ -703,7 +704,7 @@ static NSMutableArray *_categories;
 			//emojiArrayLegacy = ObjectsAndSymbolsEmoji_Legacy();
 			break;
 		case 8:
-			emojiCount = 59;
+			emojiCount = 58;
 			emojiArray = DiverseEmoji;
 			break;
 		case 1:
