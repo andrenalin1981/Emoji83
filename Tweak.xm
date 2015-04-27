@@ -846,15 +846,6 @@ static BOOL isSkinTone(NSString *skin)
 
 %end
 
-%hook UIKeyboardEmojiPage
-
-- (void)drawRect:(CGRect)rect
-{
-	%orig;	
-}
-
-%end
-
 %hook UIKeyboardEmojiScrollView
 
 - (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
@@ -973,6 +964,33 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %end
 
+%hook _UICascadingTextStorage
+
+/*- (id)attribute:(NSString *)attr atIndex:(NSUInteger)idx longestEffectiveRange:(NSRange)lRange inRange:(NSRange)range
+{
+	id r = %orig;
+	if ([attr isEqualToString:@"NSFont"]) {
+		NSLog(@"%@\n %lu", r, (unsigned long)idx);
+		NSLog(@"%lu %lu", (unsigned long)range.location, (unsigned long)range.length);
+		NSLog(@"%lu %lu", (unsigned long)lRange.location, (unsigned long)lRange.length);
+		//UIFont *font = (UIFont *)r;
+		//UIFont *emoji = [UIFont fontWithName:@"AppleColorEmoji" size:font.pointSize];
+		//return emoji;
+	}
+	return r;
+}*/
+
+/*- (void)fixFontAttributeInRange:(NSRange)range
+{
+	%orig;
+	NSLog(@"%@", self.font);
+	//NSString *string = self.string;
+	//NSRange emoRange = [string 
+	////self.font = [UIFont fontWithName:@"AppleColorEmoji" size:self.font.pointSize];
+}*/
+
+%end
+
 extern "C" UIImage *_UIImageWithName(NSString *name);
 MSHook(UIImage *, _UIImageWithName, NSString *name)
 {
@@ -1002,6 +1020,7 @@ MSHook(UIImage *, _UIImageWithName, NSString *name)
 			if (isApplication || isSpringBoard) {
 				MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
 				UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
+				dlopen("/System/Library/PrivateFrameworks/UIFoundation.framework/UIFoundation", RTLD_LAZY);
 				%init;
 				//NSArray *(*getFlickPopupInfoArray)(id, NSString *) = (NSArray *(*)(id, NSString *))MSFindSymbol(ref, "_getFlickPopupInfoArray");
 				//MSHookFunction(getFlickPopupInfoArray, MSHake(getFlickPopupInfoArray));
