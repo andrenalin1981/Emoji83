@@ -227,24 +227,19 @@ static CGFloat getHeight(NSString *name, CGFloat chocoL, CGFloat chocoP, CGFloat
 	return height;
 }
 
-static CGFloat scale()
-{
-	return UIScreen.mainScreen.scale;
-}
-
 static CGFloat getScrollViewHeight(NSString *name)
 {
-	return getHeight(name, 157.0f, 211.0f, 375.0f/scale(), 576.0f/scale(), 122.0f, 216.0f, 337.0f, 245.0f);
+	return getHeight(name, 157.0f, 211.0f, 125.0f, 192.0f, 122.0f, 216.0f, 337.0f, 245.0f);
 }
 
 static CGFloat getBarHeight(NSString *name)
 {
-	return getHeight(name, 37.0f, 47.0f, 111.0f/scale(), 102.0f/scale(), 40.0f, 37.0f, 54.0f, 58.0f);
+	return getHeight(name, 37.0f, 47.0f, 37.0f, 34.0f, 40.0f, 37.0f, 54.0f, 58.0f);
 }
 
 static CGFloat getKeyboardHeight(NSString *name)
 {
-	return getHeight(name, 194.0f, 258.0f, 486.0f/scale(), 678.0f/scale(), 162.0f, 253.0f, 391.0f, 303.0f);
+	return getHeight(name, 194.0f, 258.0f, 162.0f, 226.0f, 162.0f, 253.0f, 391.0f, 303.0f);
 }
 
 %hook UIKBRenderGeometry
