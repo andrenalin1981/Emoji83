@@ -875,7 +875,7 @@ static void fixEmoji(NSMutableAttributedString *self)
 	UIFont *emojiFont = isAlreadyEmoji ? originalFont : [UIFont fontWithName:@"AppleColorEmoji" size:originalFont.pointSize];
 	for (NSInteger charIndex = 0; charIndex < length; charIndex++) {
 		unichar stringChar = [string characterAtIndex:charIndex];
-		if (stringChar >= 0xDFFB && stringChar <= 0xDFFF) {
+		if (isSkinUnicode(stringChar)) {
 			unichar firstSkinChar = [string characterAtIndex:charIndex - 1];
 			if (firstSkinChar == 0xD83C) {
      			// found skin variant
@@ -908,8 +908,16 @@ static void fixEmoji(NSMutableAttributedString *self)
      		if (charIndex + 1 < length) {
      			if (stringChar == 0xD83D && [string characterAtIndex:charIndex + 1] == 0xDD96) {
      				// vulcan
-     				NSRange vulcanRange = NSMakeRange(charIndex, 2);
-					addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, vulcanRange);
+     				BOOL vulcan = YES;
+     				if (charIndex + 3 < length) {
+     					unichar skinCheck1 = [string characterAtIndex:charIndex + 2];
+     					unichar skinCheck2 = [string characterAtIndex:charIndex + 3];
+     					vulcan = !((skinCheck1 == 0xD83C) && isSkinUnicode(skinCheck2));
+     				}
+     				if (vulcan) {
+     					NSRange vulcanRange = NSMakeRange(charIndex, 2);
+						addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, vulcanRange);
+					}
      			}
      			if (charIndex + 6 < length) {
      				if (stringChar == 0xD83D) {
