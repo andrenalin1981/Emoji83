@@ -905,17 +905,11 @@ static void fixEmoji(NSMutableAttributedString *self)
      			}
      		}
      	} else {
-     		if (charIndex + 3 < length) {
+     		if (charIndex + 1 < length) {
      			if (stringChar == 0xD83D && [string characterAtIndex:charIndex + 1] == 0xDD96) {
-     				BOOL vulcan = YES;
-     				unichar skinChar1 = [string characterAtIndex:charIndex + 2];
-     				unichar skinChar2 = [string characterAtIndex:charIndex + 3];
-     				if (skinChar2 >= 0xDFFB && skinChar2 <= 0xDFFF && skinChar1 == 0xD83C)
-     					vulcan = NO;
-     				if (vulcan) {
-     					NSRange vulcanRange = NSMakeRange(charIndex, 2);
-						addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, vulcanRange);
-					}
+     				// vulcan
+     				NSRange vulcanRange = NSMakeRange(charIndex, 2);
+					addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, vulcanRange);
      			}
      			if (charIndex + 6 < length) {
      				if (stringChar == 0xD83D) {
