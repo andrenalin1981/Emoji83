@@ -1,49 +1,32 @@
 #import "Emoji.h"
-#import <CoreGraphics/CoreGraphics.h>
-#import <CoreText/CoreText.h>
+//#import <CoreGraphics/CoreGraphics.h>
+//#import <CoreText/CoreText.h>
+#import <CoreFoundation/CoreFoundation.h>
 
-static unsigned long *_unicodeFromEmoji(NSString *emoji)
+/*static unsigned long *_unicodeFromEmoji(NSString *emoji)
 {
 	NSData *data = [emoji dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
 	unsigned long *unicode;
 	[data getBytes:&unicode length:sizeof(unicode)];
 	return unicode;
-}
+}*/
 
 static UIKeyboardEmoji *emojiFromString(NSString *myEmoji)
 {
 	UIKeyboardEmoji *emo = nil;
 	unichar unicode = [myEmoji characterAtIndex:0];
-	BOOL dingbat = unicode == 0x261d || unicode == 0x270c;
+	BOOL dingbat = (unicode == 0x261D || unicode == 0x270C);
 	emo = [NSClassFromString(@"UIKeyboardEmoji") respondsToSelector:@selector(emojiWithString:hasDingbat:)] ? [NSClassFromString(@"UIKeyboardEmoji") emojiWithString:myEmoji hasDingbat:dingbat]
 			: [NSClassFromString(@"UIKeyboardEmoji") emojiWithString:myEmoji];
 	return emo;
 }
 
-/*static void addEmojisForIndexAtIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index, NSUInteger emojiIndex)
+static BOOL isSkinUnicode(unichar code)
 {
-	NSArray *emoji = emojiObject.emoji;
-	if (emoji.count != 0 && myEmojis.count != 0) {
-		NSMutableArray *array = [NSMutableArray array];
-		[array addObjectsFromArray:emoji];
-		for (NSString *myEmoji in myEmojis) {
-			UIKeyboardEmoji *emo = emojiFromString(myEmoji);
-			if (![array containsObject:emo]) {
-				if (emojiIndex != 0 && emojiIndex < array.count)
-					[array insertObject:emo atIndex:emojiIndex];
-				else
-					[array addObject:emo];
-			}
-		}
-		emojiObject.emoji = array;
-	}
+	return code >= 0xDFFB && code <= 0xDFFF;
 }
 
-static void addEmojisForIndex(UIKeyboardEmojiCategory *emojiObject, NSArray *myEmojis, NSUInteger index)
-{
-	addEmojisForIndexAtIndex(emojiObject, myEmojis, index, 0);
-}
-
+/*
 static void addFlagEmojis(UIKeyboardEmojiCategory *emojiObject)
 {
 	NSString *flagsString = @"🇦🇫 🇦🇱 🇩🇿 🇦🇸 🇦🇩 🇦🇴 🇦🇮 🇦🇬 🇦🇷 🇦🇲 🇦🇼 🇦🇺 🇦🇹 🇦🇿 🇧🇸 🇧🇭 🇧🇩 🇧🇧 🇧🇾 🇧🇪 🇧🇿 🇧🇯 🇧🇲 🇧🇹 🇧🇴 🇧🇦 🇧🇼 🇧🇷 🇧🇳 🇧🇬 🇧🇫 🇧🇮 🇰🇭 🇨🇲 🇨🇦 🇨🇻 🇰🇾 🇨🇫 🇨🇱 🇨🇴 🇰🇲 🇨🇩 🇨🇬 🇨🇰 🇨🇷 🇭🇷 🇨🇺 🇨🇼 🇨🇾 🇨🇿 🇩🇰 🇩🇯 🇩🇲 🇩🇴 🇪🇨 🇪🇬 🇸🇻 🇬🇶 🇪🇷 🇪🇪 🇪🇹 🇫🇴 🇫🇯 🇫🇮 🇫🇷 🇬🇫 🇹🇫 🇬🇦 🇬🇲 🇬🇪 🇬🇭 🇬🇮 🇬🇷 🇬🇩 🇬🇵 🇬🇺 🇬🇹 🇬🇳 🇬🇼 🇬🇾 🇭🇹 🇭🇳 🇭🇰 🇭🇺 🇮🇸 🇮🇳 🇮🇩 🇮🇷 🇮🇶 🇮🇪 🇮🇱 🇨🇮 🇯🇲 🇯🇴 🇰🇿 🇰🇪 🇰🇮 🇰🇼 🇰🇬 🇱🇦 🇱🇻 🇱🇧 🇱🇸 🇱🇷 🇱🇾 🇱🇮 🇱🇹 🇱🇺 🇲🇴 🇲🇰 🇲🇬 🇲🇼 🇲🇾 🇲🇻 🇲🇱 🇲🇹 🇲🇶 🇲🇷 🇲🇽 🇲🇩 🇲🇳 🇲🇪 🇲🇸 🇲🇦 🇲🇿 🇲🇲 🇳🇦 🇳🇵 🇳🇱 🇳🇨 🇳🇿 🇳🇮 🇳🇪 🇳🇬 🇳🇺 🇰🇵 🇲🇵 🇳🇴 🇴🇲 🇵🇰 🇵🇼 🇵🇸 🇵🇦 🇵🇬 🇵🇾 🇵🇪 🇵🇭 🇵🇱 🇵🇹 🇵🇷 🇶🇦 🇷🇴 🇷🇼 🇼🇸 🇸🇲 🇸🇹 🇸🇦 🇸🇳 🇷🇸 🇸🇨 🇸🇱 🇸🇬 🇸🇰 🇸🇮 🇸🇧 🇸🇴 🇿🇦 🇸🇸 🇱🇰 🇸🇩 🇸🇷 🇸🇿 🇸🇪 🇨🇭 🇸🇾 🇹🇯 🇹🇿 🇹🇭 🇹🇱 🇹🇬 🇹🇴 🇹🇹 🇹🇳 🇹🇷 🇹🇲 🇹🇨 🇹🇻 🇺🇬 🇺🇦 🇦🇪 🇺🇾 🇺🇿 🇻🇺 🇻🇪 🇻🇳 🇾🇪 🇿🇲 🇿🇼";
@@ -227,11 +210,6 @@ static CGFloat getHeight(NSString *name, CGFloat chocoL, CGFloat chocoP, CGFloat
 	return height;
 }
 
-static CGFloat getScrollViewHeight(NSString *name)
-{
-	return getHeight(name, 157.0f, 211.0f, 125.0f, 192.0f, 122.0f, 216.0f, 337.0f, 245.0f);
-}
-
 static CGFloat getBarHeight(NSString *name)
 {
 	return getHeight(name, 37.0f, 47.0f, 37.0f, 34.0f, 40.0f, 37.0f, 54.0f, 58.0f);
@@ -242,6 +220,12 @@ static CGFloat getKeyboardHeight(NSString *name)
 	return getHeight(name, 194.0f, 258.0f, 162.0f, 226.0f, 162.0f, 253.0f, 391.0f, 303.0f);
 }
 
+static CGFloat getScrollViewHeight(NSString *name)
+{
+	return getKeyboardHeight(name) - getBarHeight(name);
+}
+
+
 %hook UIKBRenderGeometry
 
 + (UIKBRenderGeometry *)geometryWithFrame:(CGRect)frame paddedFrame:(CGRect)paddedFrame
@@ -249,13 +233,6 @@ static CGFloat getKeyboardHeight(NSString *name)
 	UIKBRenderGeometry *o = %orig;
 	//NSLog(@"%@ %@ -> %@", NSStringFromCGRect(frame), NSStringFromCGRect(paddedFrame), NSStringFromCGRect(o.displayFrame));
 	return o;
-}
-
-- (CGRect)displayFrame
-{
-	CGRect p = %orig;
-	//NSLog(@"%@", NSStringFromCGRect(p));
-	return p;
 }
 
 %end
@@ -316,18 +293,9 @@ static NSArray *targetKeys()
 			UIKBRenderGeometry *inputGeometry = traits.geometry;
 			if (inputGeometry && key.state != 16) {
 				CGFloat height = getScrollViewHeight(keyplaneName);
-				//CGRect displayFrame = inputGeometry.displayFrame;
 				CGRect frame = inputGeometry.frame;
-				oldPaddedFrame = inputGeometry.paddedFrame;
-				paddedDeltaPosX = oldPaddedFrame.origin.x - frame.origin.x;
-				paddedDeltaPosY = oldPaddedFrame.origin.y - frame.origin.y;
-				paddedDeltaWidth = oldPaddedFrame.size.width - frame.size.width;
-				paddedDeltaHeight = oldPaddedFrame.size.height - frame.size.height;
 				correctFrame = CGRectMake(frame.origin.x, height, frame.size.width, height2);
-				inputGeometry.frame = correctFrame;
 				inputGeometry.displayFrame = correctFrame;
-				inputGeometry.paddedFrame = correctFrame;
-				inputGeometry.paddedFrame = CGRectMake(correctFrame.origin.x + paddedDeltaPosX, correctFrame.origin.y + paddedDeltaPosY, correctFrame.size.width + paddedDeltaWidth, correctFrame.size.height + paddedDeltaHeight);
 				traits.geometry = inputGeometry;
 			}
 		}
@@ -370,13 +338,11 @@ static NSArray *targetKeys()
 		CGRect newFrame = CGRectMake(frame.origin.x, height, frame.size.width, height2);
 		if (key.state != 16) {
 			key.frame = newFrame;
-			self.drawFrame = newFrame;
 			UIKBShape *shape = key.shape;
 			CGRect paddedFrame = shape.paddedFrame;
 			CGRect newPaddedFrame = CGRectMake(paddedFrame.origin.x, height, paddedFrame.size.width, height2);
 			shape.paddedFrame = newPaddedFrame;
 			key.shape = shape;
-			self.frame = newFrame;
 			if (beforeFrame != NULL)
 				*beforeFrame = newFrame;
 		}
@@ -663,7 +629,6 @@ static NSMutableArray *_categories;
 	UIKeyboardEmoji *emoji = nil;
 	int emojiCount = 136; // all (135) + vulcan (1)
 	unsigned long *emojiArray = PeopleEmoji;
-	//NSArray *emojiArrayLegacy = PeopleEmoji_Legacy();
 	switch (categoryType) {
 		case 0:
 			recentEmoji = [self emojiRecentsFromPreferences];
@@ -671,32 +636,26 @@ static NSMutableArray *_categories;
 		case 2:
 			emojiCount = 125; // all
 			emojiArray = NatureEmoji;
-			//emojiArrayLegacy = NatureEmoji_Legacy();
 			break;
 		case 3:
 			emojiCount = 58; // all
 			emojiArray = FoodAndDrinkEmoji;
-			//emojiArrayLegacy = FoodAndDrinkEmoji_Legacy();
 			break;
 		case 4:
 			emojiCount = 39; // all
 			emojiArray = CelebrationEmoji;
-			//emojiArrayLegacy = CelebrationEmoji_Legacy();
 			break;
 		case 5:
 			emojiCount = 53; // all
 			emojiArray = ActivityEmoji;
-			//emojiArrayLegacy = ActivityEmoji_Legacy();
 			break;
 		case 6:
 			emojiCount = 122; // some extra flags left
 			emojiArray = TravelAndPlacesEmoji;
-			//emojiArrayLegacy = TravelAndPlacesEmoji_Legacy();
 			break;
 		case 7:
 			emojiCount = 345; // all
 			emojiArray = ObjectsAndSymbolsEmoji;
-			//emojiArrayLegacy = ObjectsAndSymbolsEmoji_Legacy();
 			break;
 		case 8:
 			emojiCount = 57;
@@ -785,62 +744,6 @@ static NSMutableArray *_categories;
 
 %end
 
-static BOOL isSkinTone(NSString *skin)
-{
-	NSString *unicode = [NSString stringWithFormat:@"%lx", (unsigned long)_unicodeFromEmoji(skin)];
-	return [unicode hasPrefix:@"1f3f"];
-}
-
-%hook UIKeyboardImpl
-
-- (void)deleteBackwardAndNotify:(BOOL)notify
-{
-	NSInteger count = 0;
-	BOOL skin = NO;
-	BOOL mmww = NO;
-	BOOL mmwwk = NO;
-	BOOL fam3 = NO;
-	BOOL fam4 = NO;
-	if ([self respondsToSelector:@selector(inputDelegate)]) {
-		id inputDelegate = [self inputDelegate];
-		if ([inputDelegate respondsToSelector:@selector(text)]) {
-			NSString *text = [inputDelegate text];
-			if (text) {
-				NSUInteger length = text.length;
-				if (length >= 2) {
-					NSString *skinLike = [text substringFromIndex:length - 2];
-					skin = isSkinTone(skinLike);
-					if (length >= 8) {
-						NSString *like8 = [text substringFromIndex:length - 8];
-						mmww = [mmwws() containsObject:like8];
-						fam3 = [families() containsObject:like8];
-						if (length >= 11) {
-							NSString *like11 = [text substringFromIndex:length - 11];
-							mmwwk = [mmwwks() containsObject:like11];
-							fam4 = [families() containsObject:like11];
-						}
-					}
-				}
-			}
-		}
-	}
-	if (skin)
-		count++;
-	else if (mmww || fam3)
-		count += 4;
-	else if (mmwwk || fam4)
-		count += 6;
-	%orig;
-	if (count > 0) {
-		do {
-			%orig;
-			count--;
-		} while (count > 0);
-	}
-}
-
-%end
-
 %hook UIKeyboardEmojiScrollView
 
 - (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
@@ -894,59 +797,6 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %group iOS7
 
-/*%hook UIKeyboardImpl
-
-+ (CGSize)sizeForInterfaceOrientation:(int)orientation
-{
-	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
-	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:orientation];
-	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
-	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
-}
-
-+ (CGSize)keyboardSizeForInterfaceOrientation:(int)orientation
-{
-	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
-	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:orientation];
-	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
-	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
-}
-
-+ (CGSize)keyboardSizeForInputMode:(UIKeyboardInputMode *)inputMode screenTraits:(UIKBScreenTraits *)screenTraits
-{
-	int orientation = MSHookIvar<int>(self, "m_orientation");
-	NSString *name = UIKeyboardGetKBStarName(inputMode, screenTraits, 0, 0);
-	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
-}
-
-%end
-
-%hook UIKeyboardLayoutStar
-
-- (void)resizeForKeyplaneSize:(CGSize)size
-{
-	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:[[%c(UIKeyboard) activeKeyboard] interfaceOrientation]];
-	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
-	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
-	UIKBTree *tree = [%c(UIKeyboardLayoutStar) keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
-	if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
-		UIKBShape *shape = tree.shape;
-		CGFloat height = getKeyboardHeight(name);
-		CGRect newFrame = CGRectMake(shape.frame.origin.x, shape.frame.origin.y, shape.frame.size.width, height);
-		size = newFrame.size;
-	}
-	%orig(size);
-}
-
-+ (CGSize)keyboardSizeForInputMode:(UIKeyboardInputMode *)inputMode screenTraits:(UIKBScreenTraits *)screenTraits
-{
-	int orientation = MSHookIvar<int>([UIKeyboardImpl activeInstance], "m_orientation");
-	NSString *name = UIKeyboardGetKBStarName(inputMode, screenTraits, 0, 0);
-	return [name rangeOfString:@"Emoji"].location != NSNotFound ? CGSizeMake(%orig.width, (orientation == 1 || orientation == 2) ? 253.0f : 162.0f) : %orig;
-}
-
-%end*/
-
 %end
 
 %hook UIKeyboardEmojiView
@@ -959,30 +809,266 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %end
 
-%hook _UICascadingTextStorage
-
-/*- (id)attribute:(NSString *)attr atIndex:(NSUInteger)idx longestEffectiveRange:(NSRange)lRange inRange:(NSRange)range
+static void addAttributes(NSMutableAttributedString *self, UIFont *emojiFont, UIFont *originalFont, BOOL isAlreadyEmoji, NSRange range)
 {
-	id r = %orig;
-	if ([attr isEqualToString:@"NSFont"]) {
-		NSLog(@"%@\n %lu", r, (unsigned long)idx);
-		NSLog(@"%lu %lu", (unsigned long)range.location, (unsigned long)range.length);
-		NSLog(@"%lu %lu", (unsigned long)lRange.location, (unsigned long)lRange.length);
-		//UIFont *font = (UIFont *)r;
-		//UIFont *emoji = [UIFont fontWithName:@"AppleColorEmoji" size:font.pointSize];
-		//return emoji;
+	if (self.string.length < range.location + range.length)
+		range = NSMakeRange(range.location, self.string.length - range.location);
+	[self addAttribute:NSFontAttributeName value:emojiFont range:range];
+	if (!isAlreadyEmoji)
+		[self addAttribute:@"NSOriginalFont" value:originalFont range:range];
+}
+
+static void fixEmoji(NSMutableAttributedString *self)
+{
+	NSString *string = self.string;
+	NSUInteger length = string.length;
+	if (length == 0)
+		return;
+	UIFont *originalFont = nil;
+	if ([self respondsToSelector:@selector(font)])
+		originalFont = [self font];
+	else {
+		if ([self respondsToSelector:@selector(attribute:atIndex:effectiveRange:)]) {
+			UIFont *aFont = [(NSConcreteTextStorage *)self attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];
+			if (aFont)
+				originalFont = aFont;
+		}
 	}
-	return r;
+	if (originalFont == nil)
+		return;
+	BOOL isAlreadyEmoji = [originalFont.familyName isEqualToString:@"Apple Color Emoji"];
+	UIFont *emojiFont = isAlreadyEmoji ? originalFont : [UIFont fontWithName:@"AppleColorEmoji" size:originalFont.pointSize];
+	for (NSInteger charIndex = 0; charIndex < length; charIndex++) {
+		unichar stringChar = [string characterAtIndex:charIndex];
+		if (stringChar >= 0xDFFB && stringChar <= 0xDFFF) {
+			unichar firstSkinChar = [string characterAtIndex:charIndex - 1];
+			if (firstSkinChar == 0xD83C) {
+     			// found skin variant
+     			if (charIndex - 2 >= 0) {
+     				unichar checkEmoji = [string characterAtIndex:charIndex - 2];
+     				BOOL dingbat = checkEmoji == 0x261D || checkEmoji == 0x270A || checkEmoji == 0x270B || checkEmoji == 0x270C;
+     				if (dingbat) {
+     					// dingbat
+     					NSRange skinDingbatRange = NSMakeRange(charIndex - 2, (checkEmoji == 0x261D || checkEmoji == 0x270C) ? 4 : 3);
+     					addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, skinDingbatRange);
+					} else {
+						if (charIndex - 3 >= 0) {
+     						unichar checkEmoji2 = [string characterAtIndex:charIndex - 3];
+     						if ((checkEmoji2 == 0xD83C || checkEmoji2 == 0xD83D) && !dingbat) {
+     							BOOL isDiversed = NO;
+     							for (int i = 0; i < 54; i++) {
+     								if (checkEmoji == DiverseEmoji2[i])
+     									isDiversed = YES;
+     							}
+     							if (isDiversed) {
+     								NSRange skinRange = NSMakeRange(charIndex - 3, 4);
+									addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, skinRange);
+								}
+							}
+						}
+     				}
+     			}
+     		}
+     	} else {
+     		if (length - charIndex + 1 >= 2) {
+     			if (stringChar == 0xD83D && [string characterAtIndex:charIndex + 1] == 0xDD96) {
+     				BOOL vulcan = YES;
+     				if (length - charIndex + 1 >= 4) {
+     					unichar skinChar1 = [string characterAtIndex:charIndex + 2];
+     					unichar skinChar2 = [string characterAtIndex:charIndex + 3];
+     					if (skinChar2 >= 0xDFFB && skinChar2 <= 0xDFFF && skinChar1 == 0xD83C)
+     						vulcan = NO;
+     				}
+     				if (vulcan) {
+     					NSRange vulcanRange = NSMakeRange(charIndex, 2);
+						addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, vulcanRange);
+					}
+     			}
+     			if (length - charIndex + 1 >= 8) {
+     				if (stringChar == 0xD83D) {
+     					BOOL eleven = NO;
+     					unichar checkFamilyOrMMWW1 = [string characterAtIndex:charIndex + 2];
+     					unichar checkFamilyOrMMWW2 = [string characterAtIndex:charIndex + 3];
+     					unichar checkMMWW1 = [string characterAtIndex:charIndex + 4];
+     					unichar checkFamilyOrMMWW3 = [string characterAtIndex:charIndex + 5];
+     					unichar checkFamilyOrMMWW4 = [string characterAtIndex:charIndex + 6];
+     					if (checkFamilyOrMMWW1 == 0x200D) {
+     						if (checkFamilyOrMMWW2 == 0xD83D && checkFamilyOrMMWW3 == 0x200D && checkFamilyOrMMWW4 == 0xD83D) {
+     							// family variant
+     							if (length - charIndex + 1 >= 11) {
+     								unichar checkFamily1 = [string characterAtIndex:charIndex + 8];
+     								unichar checkFamily2 = [string characterAtIndex:charIndex + 9];
+     								if (checkFamily1 == 0x200D && checkFamily2 == 0xD83D) {
+     									// 4 people family
+     									NSRange fourFamilyRange = NSMakeRange(charIndex, 11);
+										addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, fourFamilyRange);
+     									eleven = YES;
+     								}
+     							}
+     							// 3 people family
+     							if (!eleven) {
+     								NSRange threeFamilyRange = NSMakeRange(charIndex, 8);
+									addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, threeFamilyRange);
+								}
+     						}
+     						else if (checkFamilyOrMMWW2 == 0x2764 && checkMMWW1 == 0xFE0F && checkFamilyOrMMWW3 == 0x200D && checkFamilyOrMMWW4 == 0xD83D) {
+     							// mmww variant
+     							if (length - charIndex + 1 >= 11) {
+     								unichar checkMMWW2 = [string characterAtIndex:charIndex + 8];
+     								unichar checkMMWW3 = [string characterAtIndex:charIndex + 9];
+     								if (checkMMWW2 == 0x200D && checkMMWW3 == 0xD83D) {
+     									// mmww with kiss
+     									NSRange mmwwkRange = NSMakeRange(charIndex, 11);
+										addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, mmwwkRange);
+     									eleven = YES;
+     								}
+     							}
+     							// mmww normal
+     							if (!eleven) {
+     								NSRange mmwwRange = NSMakeRange(charIndex, 8);
+									addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, mmwwRange);
+     							}
+     						}
+     					} else {
+     						// something wrong
+     						// because zero-width joiners are gone!
+     						if (length - charIndex + 1 >= 6) {
+     							int _eleven = 0;
+     							unichar _checkGender1 = [string characterAtIndex:charIndex + 1]; // dc68 or dc69
+     							unichar _checkFamilyOrMMWW1 = [string characterAtIndex:charIndex + 2]; // d83d vs 2764
+     							unichar _checkGenderOrMMWW1 = [string characterAtIndex:charIndex + 3]; // dc68 or dc69 vs fe0f
+     							unichar _checkMMWW1 = [string characterAtIndex:charIndex + 4]; // d83d
+     							unichar _checkGenderOrMMWW2 = [string characterAtIndex:charIndex + 5]; // dc66 or dc67 vs dc68 or dc69
+     							if ((_checkFamilyOrMMWW1 == 0xD83D || _checkFamilyOrMMWW1 == 0x2764) && _checkMMWW1 == 0xD83D) {
+     								// incompleted family or mmww kiss emoji
+     								if (length - charIndex + 1 >= 8) {
+     									unichar _checkFamilyOrMMWW2 = [string characterAtIndex:charIndex + 6]; // d83d
+     									unichar _checkGender4 = [string characterAtIndex:charIndex + 7]; // dc66 or dc67 vs dc68 or dc69
+     									if (_checkFamilyOrMMWW2 == 0xD83D) {
+     										if ((_checkGender4 == 0xDC66 || _checkGender4 == 0xDC67)) {
+     											// incompleted 4 people family
+     											_eleven = 1;
+     										}
+     										else if ((_checkGender4 == 0xDC68 || _checkGender4 == 0xDC69) && _checkGenderOrMMWW2 == 0xDC8B) {
+     											// incompleted mmww kiss
+     											_eleven = 2;
+     										}
+     										if (_eleven > 0) {
+     											NSRange _fourRange = NSMakeRange(charIndex, 8);
+     											NSString *emoji4String = nil;
+     											if (_eleven == 1) {
+     												unichar family4[11] = { 0xD83D, _checkGender1, 0x200D, _checkFamilyOrMMWW1, _checkGenderOrMMWW1, 0x200D, _checkMMWW1, _checkGenderOrMMWW2, 0x200D, _checkFamilyOrMMWW2, _checkGender4 };
+     												emoji4String = [NSString stringWithCharacters:family4 length:11];
+     											}
+     											else if (_eleven == 2) {
+     												unichar mmww4[11] = { 0xD83D, _checkGender1, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, 0xDC8B, 0x200D, 0xD83D, _checkGender4 };
+     												emoji4String = [NSString stringWithCharacters:mmww4 length:11];
+     											}
+     											if (emoji4String != nil) {
+     												[self replaceCharactersInRange:_fourRange withString:emoji4String];
+													addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, NSMakeRange(charIndex, 11));
+												}
+     										}
+     									}
+     								}
+     								if (_eleven == 0) {
+     									int _eight = 0;
+     									if ((_checkGenderOrMMWW1 == 0xDC68 || _checkGenderOrMMWW1 == 0xDC69) && (_checkGenderOrMMWW2 == 0xDC66 || _checkGenderOrMMWW2 == 0xDC67)) {
+     										// incompleted 3 people family
+     										_eight = 1;
+     									}     							
+     									else if (_checkGenderOrMMWW1 == 0xFE0F && (_checkGenderOrMMWW2 == 0xDC68 || _checkGenderOrMMWW2 == 0xDC69)) {
+     										// incompleted mmww
+     										_eight = 2;
+     									}
+     									if (_eight > 0) {
+     										NSRange _threeRange = NSMakeRange(charIndex, 6);
+     										NSString *emoji3String = nil;
+     										if (_eight == 1) {
+     											unichar family3[8] = { 0xD83D, _checkGender1, 0x200D, _checkFamilyOrMMWW1, _checkGenderOrMMWW1, 0x200D, _checkMMWW1, _checkGenderOrMMWW2 };
+     											emoji3String = [NSString stringWithCharacters:family3 length:8];
+     										}
+     										else if (_eight == 2) {
+     											unichar mmww3[8] = { 0xD83D, _checkGender1, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, _checkGenderOrMMWW2 };
+     											emoji3String = [NSString stringWithCharacters:mmww3 length:8];
+     										}
+     										if (emoji3String != nil) {
+     											[self replaceCharactersInRange:_threeRange withString:emoji3String];
+												addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, NSMakeRange(charIndex, 8));
+											}
+										}
+     								}
+								}
+     						}
+     					}
+     				}
+     			}
+     		}
+     	}
+     }
+}
+
+%hook NSConcreteMutableAttributedString
+
+- (id)initWithString:(NSString *)str attributes:(id)attr
+{
+	self = %orig;
+	[self fixFontAttributeInRange:NSMakeRange(0, self.length)];
+	return self;
+}
+
+/*- (id)initWithAttributedString:(NSMutableAttributedString *)str
+{
+	self = %orig;
+	[self fixFontAttributeInRange:NSMakeRange(0, self.length)];
+	return self;
 }*/
 
-/*- (void)fixFontAttributeInRange:(NSRange)range
+%end
+
+%hook NSConcreteAttributedString
+
+- (id)initWithAttributedString:(NSAttributedString *)str
+{
+	NSConcreteMutableAttributedString *mutableStr = [[%c(NSConcreteMutableAttributedString) alloc] initWithAttributedString:str];
+	[mutableStr fixFontAttributeInRange:NSMakeRange(0, self.length)];
+	return (NSConcreteAttributedString *)mutableStr;
+}
+
+%end
+
+%hook NSMutableAttributedString
+
+- (void)fixFontAttributeInRange:(NSRange)range
 {
 	%orig;
-	NSLog(@"%@", self.font);
-	//NSString *string = self.string;
-	//NSRange emoRange = [string 
-	////self.font = [UIFont fontWithName:@"AppleColorEmoji" size:self.font.pointSize];
-}*/
+	fixEmoji(self);
+}
+
+%end
+
+BOOL prevent = NO;
+
+%hook NSAssertionHandler
+
+- (void)handleFailureInMethod:(id)method object:(id)object file:(id)file lineNumber:(int)number description:(id)description
+{
+	if (prevent)
+		return;
+	%orig;
+}
+
+%end
+
+%hook UILabel
+
+- (float)_capOffsetFromBoundsTop
+{
+	prevent = YES;
+	float cap = %orig;
+	prevent = NO;
+	return cap;
+}
 
 %end
 
@@ -1003,6 +1089,124 @@ MSHook(UIImage *, _UIImageWithName, NSString *name)
 	return orig;
 }*/
 
+typedef enum {
+    kCFStringGramphemeCluster = 1, /* Unicode Grapheme Cluster (not different from kCFStringComposedCharacterCluster right now) */
+    kCFStringComposedCharacterCluster = 2, /* Compose all non-base (including spacing marks) */
+    kCFStringCursorMovementCluster = 3, /* Cluster suitable for cursor movements */
+    kCFStringBackwardDeletionCluster = 4 /* Cluster suitable for backward deletion */
+} CFStringCharacterClusterType;
+
+extern "C" CFRange CFStringGetRangeOfCharacterClusterAtIndex(CFStringRef string, CFIndex charIndex, CFStringCharacterClusterType type);
+MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, CFIndex charIndex, CFStringCharacterClusterType type)
+{
+	CFRange range = _CFStringGetRangeOfCharacterClusterAtIndex(string, charIndex, type);
+	if (type == kCFStringBackwardDeletionCluster) {
+		CFIndex length = CFStringGetLength(string);
+		if (length >= 3) {
+			// 270a, 270b
+			CFRange threeRange = CFRangeMake(length - 3, 3);
+			CFStringRef threeSkin = CFStringCreateWithSubstring(kCFAllocatorDefault, string, threeRange);
+			UniChar threeUnicode = CFStringGetCharacterAtIndex(threeSkin, 0);
+			if (threeUnicode == 0x270A || threeUnicode == 0x270B) {
+				UniChar _skin3Unicode = CFStringGetCharacterAtIndex(threeSkin, 1);
+				UniChar skin3Unicode = CFStringGetCharacterAtIndex(threeSkin, 2);
+				if (isSkinUnicode(skin3Unicode) && _skin3Unicode == 0xD83C)
+					return threeRange;
+			}
+			if (length >= 4) {
+				CFRange fourRange = CFRangeMake(length - 4, 4);
+				CFStringRef emojiSkin = CFStringCreateWithSubstring(kCFAllocatorDefault, string, fourRange);
+				UniChar lastUnicode = CFStringGetCharacterAtIndex(emojiSkin, 3);
+				BOOL dingbat = lastUnicode == 0xFE0F;
+				if (dingbat) {
+					// 261d, 270c
+					UniChar dingbatUnicode = CFStringGetCharacterAtIndex(emojiSkin, 0);
+					if (dingbatUnicode == 0x261D || dingbatUnicode == 0x270C) {
+						UniChar _dingbatSkinUnicode = CFStringGetCharacterAtIndex(emojiSkin, 1);
+						UniChar dingbatSkinUnicode = CFStringGetCharacterAtIndex(emojiSkin, 2);
+						if (isSkinUnicode(dingbatSkinUnicode) && _dingbatSkinUnicode == 0xD83C)
+							return fourRange;
+					}
+				}
+				// normal skin emoji
+				UniChar _skinUnicode = CFStringGetCharacterAtIndex(emojiSkin, 2);
+				if (isSkinUnicode(lastUnicode) && _skinUnicode == 0xD83C)
+					return fourRange;
+				if (length >= 8) {
+					CFRange eightRange = CFRangeMake(length - 8, 8);
+					CFStringRef eightEmoji = CFStringCreateWithSubstring(kCFAllocatorDefault, string, eightRange);
+					UniChar _8d83dUnicode1 = CFStringGetCharacterAtIndex(eightEmoji, 0);
+					UniChar _8d83dUnicode2 = CFStringGetCharacterAtIndex(eightEmoji, 6);
+					UniChar _8200dUnicode1 = CFStringGetCharacterAtIndex(eightEmoji, 2);
+					UniChar _8200dUnicode2 = CFStringGetCharacterAtIndex(eightEmoji, 5);
+					if (_8d83dUnicode1 == 0xD83D && _8d83dUnicode2 == 0xD83D && _8200dUnicode1 == 0x200D && _8200dUnicode2 == 0x200D) {
+						UniChar d81 = CFStringGetCharacterAtIndex(eightEmoji, 3);
+						UniChar d82 = CFStringGetCharacterAtIndex(eightEmoji, 4);
+						if (d81 == 0xD83D && (d82 == 0xDC68 || d82 == 0xDC69)) {
+							UniChar p81 = CFStringGetCharacterAtIndex(eightEmoji, 1);
+							UniChar c8 = CFStringGetCharacterAtIndex(eightEmoji, 7);
+							if ((p81 == 0xDC68 || p81 == 0xDC69) && (c8 == 0xDC66 || c8 == 0xDC67)) {
+								// 3 people family
+								return eightRange;
+							}
+						}
+						else if (d81 == 0x2764 && d82 == 0xFE0F) {
+							UniChar mw1 = CFStringGetCharacterAtIndex(eightEmoji, 1);
+							UniChar mw2 = CFStringGetCharacterAtIndex(eightEmoji, 7);
+							if ((mw1 == 0xDC68 && mw2 == 0xDC68) || (mw1 == 0xDC69 && mw2 == 0xDC69)) {
+								// mmww normal
+								return eightRange;
+							}
+						}
+					}
+					if (length >= 11) {
+						CFRange elevenRange = CFRangeMake(length - 11, 11);
+						CFStringRef elevenEmoji = CFStringCreateWithSubstring(kCFAllocatorDefault, string, elevenRange);
+						UniChar _11d83dUnicode1 = CFStringGetCharacterAtIndex(elevenEmoji, 0);
+						UniChar _11d83dUnicode2 = CFStringGetCharacterAtIndex(elevenEmoji, 6);
+						UniChar _11d83dUnicode3 = CFStringGetCharacterAtIndex(elevenEmoji, 9);
+						UniChar _11200dUnicode1 = CFStringGetCharacterAtIndex(elevenEmoji, 2);
+						UniChar _11200dUnicode2 = CFStringGetCharacterAtIndex(elevenEmoji, 5);
+						UniChar _11200dUnicode3 = CFStringGetCharacterAtIndex(elevenEmoji, 8);
+						if (_11d83dUnicode1 == 0xD83D && _11d83dUnicode2 == 0xD83D && _11d83dUnicode3 == 0xD83D && _11200dUnicode1 == 0x200D && _11200dUnicode2 == 0x200D && _11200dUnicode3 == 0x200D) {
+							UniChar d111 = CFStringGetCharacterAtIndex(elevenEmoji, 3);
+							UniChar d112 = CFStringGetCharacterAtIndex(elevenEmoji, 4);
+							UniChar d113 = CFStringGetCharacterAtIndex(elevenEmoji, 7);
+							if (d111 == 0x2764 && d112 == 0xFE0F && d113 == 0xDC8B) {
+								UniChar mwk1 =CFStringGetCharacterAtIndex(elevenEmoji, 1);
+								UniChar mwk2 = CFStringGetCharacterAtIndex(elevenEmoji, 10);
+								if ((mwk1 == 0xDC68 && mwk2 == 0xDC68) || (mwk1 == 0xDC69 && mwk2 == 0xDC69)) {
+									// mmww kiss
+									return elevenRange;
+								}
+							}
+							else if (d111 == 0xD83D) {
+								UniChar p111 = CFStringGetCharacterAtIndex(elevenEmoji, 1);
+								UniChar p112 = CFStringGetCharacterAtIndex(elevenEmoji, 4);
+								UniChar c111 = CFStringGetCharacterAtIndex(elevenEmoji, 7);
+								UniChar c112 = CFStringGetCharacterAtIndex(elevenEmoji, 10);
+								BOOL family4 = NO;
+								BOOL mw = (p111 == 0xDC68 && p112 == 0xDC69);
+								BOOL ww = (p111 == 0xDC69 && p112 == 0xDC69);
+								BOOL mm = (p111 == 0xDC68 && p112 == 0xDC68);
+								BOOL gb = (c111 == 0xDC67 && c112 == 0xDC66);
+								BOOL bb = (c111 == 0xDC66 && c112 == 0xDC66);
+								BOOL gg = (c111 == 0xDC67 && c112 == 0xDC67);
+								family4 = (mw || ww || mm) && (gb || bb || gg);
+								if (family4) {
+									// 4 people family
+									return elevenRange;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return range;
+}
+
 %ctor
 {
 	NSArray *args = [[NSClassFromString(@"NSProcessInfo") processInfo] arguments];
@@ -1020,10 +1224,7 @@ MSHook(UIImage *, _UIImageWithName, NSString *name)
 				//NSArray *(*getFlickPopupInfoArray)(id, NSString *) = (NSArray *(*)(id, NSString *))MSFindSymbol(ref, "_getFlickPopupInfoArray");
 				//MSHookFunction(getFlickPopupInfoArray, MSHake(getFlickPopupInfoArray));
 				MSHookFunction(_UIImageWithName, MSHake(_UIImageWithName));
-				/*MSHookFunction(CGContextSetTextMatrix, MSHake(CGContextSetTextMatrix));
-				MSHookFunction(CGAffineTransformMakeTranslation, MSHake(CGAffineTransformMakeTranslation));
-				MSHookFunction(CGContextConcatCTM, MSHake(CGContextConcatCTM));*/
-				//dlopen("/System/Library/PrivateFrameworks/TextInput.framework/TextInput", RTLD_LAZY);
+				MSHookFunction(CFStringGetRangeOfCharacterClusterAtIndex, MSHake(CFStringGetRangeOfCharacterClusterAtIndex));
 				if (isiOS7Up) {
 					%init(iOS7Up);
 					if (isiOS8Up) {
