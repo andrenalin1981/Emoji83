@@ -905,7 +905,7 @@ static void fixEmoji(NSMutableAttributedString *self)
      			}
      		}
      	} else {
-     		if (length - charIndex + 1 >= 2) {
+     		if (charIndex + 3 < length) {
      			if (stringChar == 0xD83D && [string characterAtIndex:charIndex + 1] == 0xDD96) {
      				BOOL vulcan = YES;
      				if (length - charIndex + 1 >= 4) {
@@ -919,7 +919,7 @@ static void fixEmoji(NSMutableAttributedString *self)
 						addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, vulcanRange);
 					}
      			}
-     			if (length - charIndex + 1 >= 8) {
+     			if (charIndex + 6 < length) {
      				if (stringChar == 0xD83D) {
      					BOOL eleven = NO;
      					unichar checkFamilyOrMMWW1 = [string characterAtIndex:charIndex + 2];
@@ -930,7 +930,7 @@ static void fixEmoji(NSMutableAttributedString *self)
      					if (checkFamilyOrMMWW1 == 0x200D) {
      						if (checkFamilyOrMMWW2 == 0xD83D && checkFamilyOrMMWW3 == 0x200D && checkFamilyOrMMWW4 == 0xD83D) {
      							// family variant
-     							if (length - charIndex + 1 >= 11) {
+     							if (charIndex + 9 < length) {
      								unichar checkFamily1 = [string characterAtIndex:charIndex + 8];
      								unichar checkFamily2 = [string characterAtIndex:charIndex + 9];
      								if (checkFamily1 == 0x200D && checkFamily2 == 0xD83D) {
@@ -948,7 +948,7 @@ static void fixEmoji(NSMutableAttributedString *self)
      						}
      						else if (checkFamilyOrMMWW2 == 0x2764 && checkMMWW1 == 0xFE0F && checkFamilyOrMMWW3 == 0x200D && checkFamilyOrMMWW4 == 0xD83D) {
      							// mmww variant
-     							if (length - charIndex + 1 >= 11) {
+     							if (charIndex + 9 < length) {
      								unichar checkMMWW2 = [string characterAtIndex:charIndex + 8];
      								unichar checkMMWW3 = [string characterAtIndex:charIndex + 9];
      								if (checkMMWW2 == 0x200D && checkMMWW3 == 0xD83D) {
@@ -967,7 +967,7 @@ static void fixEmoji(NSMutableAttributedString *self)
      					} else {
      						// something wrong
      						// because zero-width joiners are gone!
-     						if (length - charIndex + 1 >= 6) {
+     						if (charIndex + 5 < length) {
      							int _eleven = 0;
      							unichar _checkGender1 = [string characterAtIndex:charIndex + 1]; // dc68 or dc69
      							unichar _checkFamilyOrMMWW1 = [string characterAtIndex:charIndex + 2]; // d83d vs 2764
@@ -976,7 +976,7 @@ static void fixEmoji(NSMutableAttributedString *self)
      							unichar _checkGenderOrMMWW2 = [string characterAtIndex:charIndex + 5]; // dc66 or dc67 vs dc68 or dc69
      							if ((_checkFamilyOrMMWW1 == 0xD83D || _checkFamilyOrMMWW1 == 0x2764) && _checkMMWW1 == 0xD83D) {
      								// incompleted family or mmww kiss emoji
-     								if (length - charIndex + 1 >= 8) {
+     								if (charIndex + 7 < length) {
      									unichar _checkFamilyOrMMWW2 = [string characterAtIndex:charIndex + 6]; // d83d
      									unichar _checkGender4 = [string characterAtIndex:charIndex + 7]; // dc66 or dc67 vs dc68 or dc69
      									if (_checkFamilyOrMMWW2 == 0xD83D) {
