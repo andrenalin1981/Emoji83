@@ -305,7 +305,7 @@ static NSArray *targetKeys()
 
 %end
 
-%hook UIKBDimmingView
+/*%hook UIKBDimmingView
 
 - (void)drawRect:(CGRect)rect
 {
@@ -320,7 +320,7 @@ static NSArray *targetKeys()
 	}
 }
 
-%end
+%end*/
 
 %hook UIKBKeyView
 
@@ -797,6 +797,27 @@ NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, 
 
 %group iOS7
 
+%hook UIKeyboardLayoutStar
+
+- (void)resizeForKeyplaneSize:(CGSize)size
+{
+	int orientation = [[%c(UIKeyboard) activeKeyboard] interfaceOrientation];
+	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:orientation];
+	[screenTraits setOrientationKey:[UIKeyboardImpl orientationKeyForOrientation:orientation]];
+	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
+	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
+	UIKBTree *tree = [%c(UIKeyboardLayoutStar) keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
+	if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
+		UIKBShape *shape = tree.shape;
+		CGFloat height = getKeyboardHeight(name);
+		CGRect newFrame = CGRectMake(shape.frame.origin.x, shape.frame.origin.y, shape.frame.size.width, height);
+		size = newFrame.size;
+	}
+	%orig(size);
+}
+
+%end
+
 %end
 
 %hook UIKeyboardEmojiView
@@ -826,7 +847,7 @@ static void fixEmoji(NSMutableAttributedString *self)
 		return;
 	UIFont *originalFont = nil;
 	if ([self respondsToSelector:@selector(font)])
-		originalFont = [self font];
+		originalFont = ((_UICascadingTextStorage *)self).font;
 	else {
 		if ([self respondsToSelector:@selector(attribute:atIndex:effectiveRange:)]) {
 			UIFont *aFont = [(NSConcreteTextStorage *)self attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];

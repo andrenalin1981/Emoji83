@@ -1,5 +1,9 @@
 #import "../PS.h"
 
+@interface NSMutableAttributedString (Private)
+- (void)fixFontAttributeInRange:(NSRange)range;
+@end
+
 @interface NSRefCountedRunArray : NSObject // ???
 @end
 
@@ -67,6 +71,7 @@
 
 @interface UIKBScreenTraits : NSObject
 + (UIKBScreenTraits *)traitsWithScreen:(UIScreen *)screen orientation:(int)orientation;
+@property(retain, nonatomic) id orientationKey; // iOS < 8
 @end
 
 @interface UIKBDimmingView : UIView
@@ -134,6 +139,11 @@
 - (CGRect)_keyplaneFrame;
 @end
 
+@interface UIKeyboard : NSObject
++ (UIKeyboard *)activeKeyboard;
+- (int)interfaceOrientation;
+@end
+
 @interface UIKBKeyView : UIView {
 	UIKBTree *m_key;
 }
@@ -154,6 +164,7 @@
 @interface UIKeyboardImpl : NSObject
 + (UIScreen *)keyboardScreen;
 + (Class)layoutClassForCurrentInputMode;
++ (id)orientationKeyForOrientation:(int)orientation; // iOS < 8
 - (id <textInputDelegate> )inputDelegate;
 - (UIKeyboardLayoutStar *)_layout;
 @end
@@ -317,13 +328,6 @@ static unsigned long FoodAndDrinkEmoji[] = {
 	0x1F371, 0, 0x1F372, 0, 0x1F373, 0, 0x1F374, 0, 0x1F375, 0, 0x2615, 0, 0x1F376, 0, 0x1F377, 0, 0x1F378, 0,
 	0x1F379, 0, 0x1F37A, 0, 0x1F37B, 0, 0x1F37C, 0
 };
-
-/*static NSArray *FoodAndDrinkEmoji_Legacy()
-{
-	NSString *string = @"🍅 🍆 🌽 🍠 🍇 🍈 🍉 🍊 🍋 🍌 🍍 🍎 🍏 🍐 🍑 🍒 🍓 🍔 🍕 🍖 🍗 🍘 🍙 🍚 🍛 🍜 🍝 🍞 🍟 🍡 🍢 🍣 🍤 🍥 🍦 🍧 🍨 🍩 🍪 🍫 🍬 🍭 🍮 🍯 🍰 🍱 🍲 🍳 🍴 🍵 🍺 🍻 🍼";
-	NSArray *array = [string componentsSeparatedByString:@" "];
-	return array;
-}*/
 
 static unsigned long CelebrationEmoji[] = {
 	0x1F380, 0, 0x1F381, 0, 0x1F382, 0, 0x1F383, 0, 0x1F384, 0, 0x1F38B, 0, 0x1F38D, 0, 0x1F391, 0, 0x1F386, 0, 
