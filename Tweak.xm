@@ -1098,6 +1098,14 @@ BOOL prevent = NO;
 	return cap;
 }
 
+- (double)_firstLineBaselineOffsetFromBoundsTop
+{
+	prevent = YES;
+	double offset = %orig;
+	prevent = NO;
+	return offset;
+}
+
 %end
 
 extern "C" UIImage *_UIImageWithName(NSString *name);
@@ -1124,15 +1132,26 @@ typedef enum {
     kCFStringBackwardDeletionCluster = 4 /* Cluster suitable for backward deletion */
 } CFStringCharacterClusterType;
 
+/*%hook UITextInputController
+
+- (NSRange)_rangeForBackwardsDelete
+{
+	NSRange selectedRange = [self selectedRange];
+	NSLog(@"lo %d le %d", selectedRange.location, selectedRange.length);
+	return %orig;
+}
+
+%end*/
+
 extern "C" CFRange CFStringGetRangeOfCharacterClusterAtIndex(CFStringRef string, CFIndex charIndex, CFStringCharacterClusterType type);
 MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, CFIndex charIndex, CFStringCharacterClusterType type)
 {
 	CFRange range = _CFStringGetRangeOfCharacterClusterAtIndex(string, charIndex, type);
 	if (type == kCFStringBackwardDeletionCluster) {
-		CFIndex length = CFStringGetLength(string);
-		if (length >= 3) {
+		//CFIndex length = CFStringGetLength(string);
+		if (charIndex - 2 >= 0) {
 			// 270a, 270b
-			CFRange threeRange = CFRangeMake(length - 3, 3);
+			CFRange threeRange = CFRangeMake(charIndex - 2, 3);
 			CFStringRef threeSkin = CFStringCreateWithSubstring(kCFAllocatorDefault, string, threeRange);
 			UniChar threeUnicode = CFStringGetCharacterAtIndex(threeSkin, 0);
 			if (threeUnicode == 0x270A || threeUnicode == 0x270B) {
@@ -1141,8 +1160,8 @@ MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, C
 				if (isSkinUnicode(skin3Unicode) && _skin3Unicode == 0xD83C)
 					return threeRange;
 			}
-			if (length >= 4) {
-				CFRange fourRange = CFRangeMake(length - 4, 4);
+			if (charIndex - 3 >= 0) {
+				CFRange fourRange = CFRangeMake(charIndex - 3, 4);
 				CFStringRef emojiSkin = CFStringCreateWithSubstring(kCFAllocatorDefault, string, fourRange);
 				UniChar lastUnicode = CFStringGetCharacterAtIndex(emojiSkin, 3);
 				BOOL dingbat = lastUnicode == 0xFE0F;
@@ -1160,8 +1179,8 @@ MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, C
 				UniChar _skinUnicode = CFStringGetCharacterAtIndex(emojiSkin, 2);
 				if (isSkinUnicode(lastUnicode) && _skinUnicode == 0xD83C)
 					return fourRange;
-				if (length >= 8) {
-					CFRange eightRange = CFRangeMake(length - 8, 8);
+				if (charIndex - 7 >= 0) {
+					CFRange eightRange = CFRangeMake(charIndex - 7, 8);
 					CFStringRef eightEmoji = CFStringCreateWithSubstring(kCFAllocatorDefault, string, eightRange);
 					UniChar _8d83dUnicode1 = CFStringGetCharacterAtIndex(eightEmoji, 0);
 					UniChar _8d83dUnicode2 = CFStringGetCharacterAtIndex(eightEmoji, 6);
@@ -1187,8 +1206,8 @@ MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, C
 							}
 						}
 					}
-					if (length >= 11) {
-						CFRange elevenRange = CFRangeMake(length - 11, 11);
+					if (charIndex - 10 >= 0) {
+						CFRange elevenRange = CFRangeMake(charIndex - 10, 11);
 						CFStringRef elevenEmoji = CFStringCreateWithSubstring(kCFAllocatorDefault, string, elevenRange);
 						UniChar _11d83dUnicode1 = CFStringGetCharacterAtIndex(elevenEmoji, 0);
 						UniChar _11d83dUnicode2 = CFStringGetCharacterAtIndex(elevenEmoji, 6);
@@ -1201,7 +1220,7 @@ MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, C
 							UniChar d112 = CFStringGetCharacterAtIndex(elevenEmoji, 4);
 							UniChar d113 = CFStringGetCharacterAtIndex(elevenEmoji, 7);
 							if (d111 == 0x2764 && d112 == 0xFE0F && d113 == 0xDC8B) {
-								UniChar mwk1 =CFStringGetCharacterAtIndex(elevenEmoji, 1);
+								UniChar mwk1 = CFStringGetCharacterAtIndex(elevenEmoji, 1);
 								UniChar mwk2 = CFStringGetCharacterAtIndex(elevenEmoji, 10);
 								if ((mwk1 == 0xDC68 && mwk2 == 0xDC68) || (mwk1 == 0xDC69 && mwk2 == 0xDC69)) {
 									// mmww kiss

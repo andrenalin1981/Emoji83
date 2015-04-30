@@ -74,6 +74,14 @@
 @property(retain, nonatomic) id orientationKey; // iOS < 8
 @end
 
+@interface UITextInputController : NSObject
+- (NSRange)selectedRange;
+- (NSRange)_selectedRange;
+- (UITextRange *)selectedTextRange;
+- (UITextPosition *)beginningOfDocument;
+- (NSInteger)offsetFromPosition:(UITextPosition *)fromPosition toPosition:(UITextPosition *)toPosition;
+@end
+
 @interface UIKBDimmingView : UIView
 @end
 
