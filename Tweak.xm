@@ -875,21 +875,22 @@ static void fixEmoji(NSMutableAttributedString *self)
 	UIFont *emojiFont = isAlreadyEmoji ? originalFont : [UIFont fontWithName:@"AppleColorEmoji" size:originalFont.pointSize];
 	for (NSInteger charIndex = 0; charIndex < length; charIndex++) {
 		unichar stringChar = [string characterAtIndex:charIndex];
-		if (isSkinUnicode(stringChar)) {
+		if (isSkinUnicode(stringChar) && charIndex - 1 >= 0) {
 			unichar firstSkinChar = [string characterAtIndex:charIndex - 1];
 			if (firstSkinChar == 0xD83C) {
      			// found skin variant
      			if (charIndex - 2 >= 0) {
      				unichar checkEmoji = [string characterAtIndex:charIndex - 2];
-     				BOOL dingbat = checkEmoji == 0x261D || checkEmoji == 0x270A || checkEmoji == 0x270B || checkEmoji == 0x270C;
-     				if (dingbat) {
-     					// dingbat
-     					NSRange skinDingbatRange = NSMakeRange(charIndex - 2, (checkEmoji == 0x261D || checkEmoji == 0x270C) ? 4 : 3);
+     				BOOL Short = checkEmoji == 0x261D || checkEmoji == 0x270A || checkEmoji == 0x270B || checkEmoji == 0x270C;
+     				if (Short) {
+     					BOOL dingbat = (checkEmoji == 0x261D || checkEmoji == 0x270C);
+     					NSUInteger shortLength = (dingbat && (charIndex + 1 < length)) ? 4 : 3;
+     					NSRange skinDingbatRange = NSMakeRange(charIndex - 2, shortLength);
      					addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, skinDingbatRange);
 					} else {
 						if (charIndex - 3 >= 0) {
      						unichar checkEmoji2 = [string characterAtIndex:charIndex - 3];
-     						if ((checkEmoji2 == 0xD83C || checkEmoji2 == 0xD83D) && !dingbat) {
+     						if ((checkEmoji2 == 0xD83C || checkEmoji2 == 0xD83D) && !Short) {
      							BOOL isDiversed = NO;
      							for (int i = 0; i < DIVERSE_COUNT; i++) {
      								if (checkEmoji == DiverseEmoji2[i])
@@ -919,7 +920,7 @@ static void fixEmoji(NSMutableAttributedString *self)
 						addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, vulcanRange);
 					}
      			}
-     			if (charIndex + 6 < length) {
+     			else if (charIndex + 6 < length) {
      				if (stringChar == 0xD83D) {
      					BOOL eleven = NO;
      					unichar checkFamilyOrMMWW1 = [string characterAtIndex:charIndex + 2];
@@ -964,77 +965,6 @@ static void fixEmoji(NSMutableAttributedString *self)
 									addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, mmwwRange);
      							}
      						}
-     					} else {
-     						// something wrong
-     						// because zero-width joiners are gone!
-     						if (charIndex + 5 < length) {
-     							int _eleven = 0;
-     							unichar _checkGender1 = [string characterAtIndex:charIndex + 1]; // dc68 or dc69
-     							unichar _checkFamilyOrMMWW1 = [string characterAtIndex:charIndex + 2]; // d83d vs 2764
-     							unichar _checkGenderOrMMWW1 = [string characterAtIndex:charIndex + 3]; // dc68 or dc69 vs fe0f
-     							unichar _checkMMWW1 = [string characterAtIndex:charIndex + 4]; // d83d
-     							unichar _checkGenderOrMMWW2 = [string characterAtIndex:charIndex + 5]; // dc66 or dc67 vs dc68 or dc69
-     							if ((_checkFamilyOrMMWW1 == 0xD83D || _checkFamilyOrMMWW1 == 0x2764) && _checkMMWW1 == 0xD83D) {
-     								// incompleted family or mmww kiss emoji
-     								if (charIndex + 7 < length) {
-     									unichar _checkFamilyOrMMWW2 = [string characterAtIndex:charIndex + 6]; // d83d
-     									unichar _checkGender4 = [string characterAtIndex:charIndex + 7]; // dc66 or dc67 vs dc68 or dc69
-     									if (_checkFamilyOrMMWW2 == 0xD83D) {
-     										if ((_checkGender4 == 0xDC66 || _checkGender4 == 0xDC67)) {
-     											// incompleted 4 people family
-     											_eleven = 1;
-     										}
-     										else if ((_checkGender4 == 0xDC68 || _checkGender4 == 0xDC69) && _checkGenderOrMMWW2 == 0xDC8B) {
-     											// incompleted mmww kiss
-     											_eleven = 2;
-     										}
-     										if (_eleven > 0) {
-     											NSRange _fourRange = NSMakeRange(charIndex, 8);
-     											NSString *emoji4String = nil;
-     											if (_eleven == 1) {
-     												unichar family4[11] = { 0xD83D, _checkGender1, 0x200D, _checkFamilyOrMMWW1, _checkGenderOrMMWW1, 0x200D, _checkMMWW1, _checkGenderOrMMWW2, 0x200D, _checkFamilyOrMMWW2, _checkGender4 };
-     												emoji4String = [NSString stringWithCharacters:family4 length:11];
-     											}
-     											else if (_eleven == 2) {
-     												unichar mmww4[11] = { 0xD83D, _checkGender1, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, 0xDC8B, 0x200D, 0xD83D, _checkGender4 };
-     												emoji4String = [NSString stringWithCharacters:mmww4 length:11];
-     											}
-     											if (emoji4String != nil) {
-     												[self replaceCharactersInRange:_fourRange withString:emoji4String];
-													addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, NSMakeRange(charIndex, 11));
-												}
-     										}
-     									}
-     								}
-     								if (_eleven == 0) {
-     									int _eight = 0;
-     									if ((_checkGenderOrMMWW1 == 0xDC68 || _checkGenderOrMMWW1 == 0xDC69) && (_checkGenderOrMMWW2 == 0xDC66 || _checkGenderOrMMWW2 == 0xDC67)) {
-     										// incompleted 3 people family
-     										_eight = 1;
-     									}     							
-     									else if (_checkGenderOrMMWW1 == 0xFE0F && (_checkGenderOrMMWW2 == 0xDC68 || _checkGenderOrMMWW2 == 0xDC69)) {
-     										// incompleted mmww
-     										_eight = 2;
-     									}
-     									if (_eight > 0) {
-     										NSRange _threeRange = NSMakeRange(charIndex, 6);
-     										NSString *emoji3String = nil;
-     										if (_eight == 1) {
-     											unichar family3[8] = { 0xD83D, _checkGender1, 0x200D, _checkFamilyOrMMWW1, _checkGenderOrMMWW1, 0x200D, _checkMMWW1, _checkGenderOrMMWW2 };
-     											emoji3String = [NSString stringWithCharacters:family3 length:8];
-     										}
-     										else if (_eight == 2) {
-     											unichar mmww3[8] = { 0xD83D, _checkGender1, 0x200D, 0x2764, 0xFE0F, 0x200D, 0xD83D, _checkGenderOrMMWW2 };
-     											emoji3String = [NSString stringWithCharacters:mmww3 length:8];
-     										}
-     										if (emoji3String != nil) {
-     											[self replaceCharactersInRange:_threeRange withString:emoji3String];
-												addAttributes(self, emojiFont, originalFont, isAlreadyEmoji, NSMakeRange(charIndex, 8));
-											}
-										}
-     								}
-								}
-     						}
      					}
      				}
      			}
@@ -1043,24 +973,13 @@ static void fixEmoji(NSMutableAttributedString *self)
      }
 }
 
-%hook NSConcreteMutableAttributedString
-
-- (id)initWithString:(NSString *)str attributes:(id)attr
-{
-	self = %orig;
-	[self fixFontAttributeInRange:NSMakeRange(0, self.length)];
-	return self;
-}
-
-%end
-
 %hook NSConcreteAttributedString
 
 - (id)initWithAttributedString:(NSAttributedString *)str
 {
-	NSConcreteMutableAttributedString *mutableStr = [[%c(NSConcreteMutableAttributedString) alloc] initWithAttributedString:str];
-	[mutableStr fixFontAttributeInRange:NSMakeRange(0, self.length)];
-	return (NSConcreteAttributedString *)mutableStr;
+	if ([str isKindOfClass:%c(NSMutableAttributedString)])
+		[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
+	return %orig(str);
 }
 
 %end

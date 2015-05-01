@@ -6,7 +6,7 @@ include theos/makefiles/common.mk
 
 TWEAK_NAME = Emoji83
 Emoji83_FILES = Tweak.xm
-Emoji83_FRAMEWORKS = UIKit CoreGraphics CoreText
+Emoji83_FRAMEWORKS = UIKit CoreGraphics CoreFoundation CoreText
 #Emoji83_PRIVATE_FRAMEWORKS = TextInput
 
 include $(THEOS_MAKE_PATH)/tweak.mk
