@@ -1089,6 +1089,13 @@ static BOOL incompletedLongEmoji(NSString *string)
 	return detected;
 }
 
+static BOOL emojiToBeFixed(NSString *string)
+{
+	BOOL eightPlus = incompletedLongEmoji(string);
+	BOOL vulcan = [string rangeOfString:[NSString stringWithUnichar:0x1F596]].location != NSNotFound;
+	return eightPlus || vulcan;
+}
+
 %hook NSConcreteMutableAttributedString
 
 - (id)initWithString:(NSString *)str attributes:(id)attr
@@ -1104,7 +1111,7 @@ static BOOL incompletedLongEmoji(NSString *string)
 
 - (id)initWithAttributedString:(NSAttributedString *)str
 {
-	/*if ([str isKindOfClass:%c(NSMutableAttributedString)]) {
+	if ([str isKindOfClass:%c(NSMutableAttributedString)]) {
 		NSArray *a;
 		object_getInstanceVariable(self, "mutableAttributes", (void **)&a);
 		if (a) {
@@ -1114,14 +1121,11 @@ static BOOL incompletedLongEmoji(NSString *string)
 				[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
 		}
 		else {
-			if (incompletedLongEmoji(str.string))
+			if (emojiToBeFixed(str.string))
 				[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
 		}
 	}
-	return %orig(str);*/
-	NSConcreteMutableAttributedString *mutableStr = [[%c(NSConcreteMutableAttributedString) alloc] initWithAttributedString:str];
-	[mutableStr fixFontAttributeInRange:NSMakeRange(0, self.length)];
-	return (NSConcreteAttributedString *)mutableStr;
+	return %orig(str);
 }
 
 %end
