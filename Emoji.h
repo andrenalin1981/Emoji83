@@ -170,6 +170,7 @@
 @end
 
 @interface UIKeyboardImpl : NSObject
++ (UIKeyboardImpl *)activeInstance;
 + (UIScreen *)keyboardScreen;
 + (Class)layoutClassForCurrentInputMode;
 + (id)orientationKeyForOrientation:(int)orientation; // iOS < 8

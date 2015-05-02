@@ -343,6 +343,7 @@ static NSArray *targetKeys()
 			CGRect newPaddedFrame = CGRectMake(paddedFrame.origin.x, height, paddedFrame.size.width, height2);
 			shape.paddedFrame = newPaddedFrame;
 			key.shape = shape;
+			self.frame = frame;
 			if (beforeFrame != NULL)
 				*beforeFrame = newFrame;
 		}
@@ -1088,11 +1089,22 @@ static BOOL incompletedLongEmoji(NSString *string)
 	return detected;
 }
 
+%hook NSConcreteMutableAttributedString
+
+- (id)initWithString:(NSString *)str attributes:(id)attr
+{
+	self = %orig;
+	[self fixFontAttributeInRange:NSMakeRange(0, self.length)];
+	return self;
+}
+
+%end
+
 %hook NSConcreteAttributedString
 
 - (id)initWithAttributedString:(NSAttributedString *)str
 {
-	if ([str isKindOfClass:%c(NSMutableAttributedString)]) {
+	/*if ([str isKindOfClass:%c(NSMutableAttributedString)]) {
 		NSArray *a;
 		object_getInstanceVariable(self, "mutableAttributes", (void **)&a);
 		if (a) {
@@ -1106,7 +1118,10 @@ static BOOL incompletedLongEmoji(NSString *string)
 				[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
 		}
 	}
-	return %orig(str);
+	return %orig(str);*/
+	NSConcreteMutableAttributedString *mutableStr = [[%c(NSConcreteMutableAttributedString) alloc] initWithAttributedString:str];
+	[mutableStr fixFontAttributeInRange:NSMakeRange(0, self.length)];
+	return (NSConcreteAttributedString *)mutableStr;
 }
 
 %end
