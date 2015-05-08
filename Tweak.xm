@@ -850,6 +850,9 @@ static void addAttributes(NSMutableAttributedString *self, UIFont *emojiFont, UI
 	if (self.string.length < range.location + range.length)
 		range = NSMakeRange(range.location, self.string.length - range.location);
 	[self addAttribute:NSFontAttributeName value:emojiFont range:range];
+	BOOL lastResort = [originalFont.fontName isEqualToString:@"LastResort"];
+	if (lastResort)
+		originalFont = [UIFont systemFontOfSize:originalFont.pointSize];
 	if (!isAlreadyEmoji)
 		[self addAttribute:@"NSOriginalFont" value:originalFont range:range];
 }
@@ -865,15 +868,14 @@ static void fixEmoji(NSMutableAttributedString *self)
 		originalFont = ((_UICascadingTextStorage *)self).font;
 	else {
 		if ([self respondsToSelector:@selector(attribute:atIndex:effectiveRange:)]) {
-			UIFont *aFont = [(NSConcreteTextStorage *)self attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];
+			UIFont *aFont = [self attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];
 			if (aFont)
 				originalFont = aFont;
 		}
 	}
-	if (originalFont == nil)
-		return;
-	BOOL isAlreadyEmoji = [originalFont.familyName isEqualToString:@"Apple Color Emoji"];
-	UIFont *emojiFont = isAlreadyEmoji ? originalFont : [UIFont fontWithName:@"AppleColorEmoji" size:originalFont.pointSize];
+	CGFloat pointSize = originalFont ? originalFont.pointSize : 14.0f;
+	BOOL isAlreadyEmoji = [originalFont.fontName isEqualToString:@"AppleColorEmoji"];
+	UIFont *emojiFont = isAlreadyEmoji ? originalFont : [UIFont fontWithName:@"AppleColorEmoji" size:pointSize];
 	for (NSInteger charIndex = 0; charIndex < length; charIndex++) {
 		unichar stringChar = [string characterAtIndex:charIndex];
 		if (isSkinUnicode(stringChar) && charIndex - 1 >= 0) {
@@ -1092,8 +1094,8 @@ static BOOL incompletedLongEmoji(NSString *string)
 static BOOL emojiToBeFixed(NSString *string)
 {
 	BOOL eightPlus = incompletedLongEmoji(string);
-	BOOL vulcan = [string rangeOfString:[NSString stringWithUnichar:0x1F596]].location != NSNotFound;
-	return eightPlus || vulcan;
+	//BOOL vulcan = [string rangeOfString:[NSString stringWithUnichar:0x1F596]].location != NSNotFound;
+	return eightPlus/* || vulcan*/;
 }
 
 %hook NSConcreteMutableAttributedString
@@ -1112,16 +1114,15 @@ static BOOL emojiToBeFixed(NSString *string)
 - (id)initWithAttributedString:(NSAttributedString *)str
 {
 	if ([str isKindOfClass:%c(NSMutableAttributedString)]) {
-		NSArray *a;
-		object_getInstanceVariable(self, "mutableAttributes", (void **)&a);
-		if (a) {
-			id im = [str attribute:@"__kIMMessagePartAttributeName" atIndex:0 effectiveRange:NULL];
-			BOOL shouldFix = !im || [im intValue] != 0;
-			if (shouldFix)
-				[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
+		id im = nil;
+		@try {
+			im = [str attribute:@"__kIMMessagePartAttributeName" atIndex:0 effectiveRange:NULL];
 		}
-		else {
-			if (emojiToBeFixed(str.string))
+		@catch (NSException *exception) {}
+		@finally {
+			BOOL shouldFix = !im || [im intValue] != 0;
+			NSLog(@"%d", shouldFix);
+			if (shouldFix && emojiToBeFixed(str.string))
 				[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
 		}
 	}
@@ -1319,6 +1320,44 @@ MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, C
 	return range;
 }
 
+%group SB
+
+NSString *path83 = @"/var/mobile/Library/Preferences/com.ps.emoji83.temporary.plist";
+NSString *pathlayout = @"/var/mobile/Library/Preferences/com.ps.emojilayout.temporary.plist";
+NSString *didShow = @"didShow";
+
+%hook SpringBoard
+
+- (void)applicationDidFinishLaunching:(id)application
+{
+    %orig;
+    NSMutableDictionary *prefs = nil;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.ps.emoji83.list"]) {
+    	prefs = [[[NSMutableDictionary dictionaryWithContentsOfFile:path83] mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
+    	if (!prefs[didShow]) {
+			UIAlertView *o = [[UIAlertView alloc] initWithTitle:@"Emoji83 [Beta]" message:@"GitHub version of Emoji83 not found." delegate:nil cancelButtonTitle:[NSString stringWithUnichar:0x1F596] otherButtonTitles:nil];
+			[o show];
+			[o release];
+			prefs[didShow] = @YES;
+			[prefs writeToFile:path83 atomically:YES];
+		}
+	}
+	if (![[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.ps.emojilayout.list"]) {
+    	prefs = [[[NSMutableDictionary dictionaryWithContentsOfFile:pathlayout] mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
+    	if (!prefs[didShow]) {
+			UIAlertView *o = [[UIAlertView alloc] initWithTitle:@"EmojiLayout [Beta]" message:@"GitHub version of EmojiLayout not found." delegate:nil cancelButtonTitle:[NSString stringWithUnichar:0x1F596] otherButtonTitles:nil];
+			[o show];
+			[o release];
+			prefs[didShow] = @YES;
+			[prefs writeToFile:pathlayout atomically:YES];
+		}
+	}
+}
+
+%end
+
+%end
+
 %ctor
 {
 	NSArray *args = [[NSClassFromString(@"NSProcessInfo") processInfo] arguments];
@@ -1329,6 +1368,9 @@ MSHook(CFRange, CFStringGetRangeOfCharacterClusterAtIndex, CFStringRef string, C
 			BOOL isApplication = [executablePath rangeOfString:@"/Application"].location != NSNotFound;
 			BOOL isSpringBoard = [[executablePath lastPathComponent] isEqualToString:@"SpringBoard"];
 			if (isApplication || isSpringBoard) {
+				if (isSpringBoard) {
+					%init(SB);
+				}
 				MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
 				UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
 				dlopen("/System/Library/PrivateFrameworks/UIFoundation.framework/UIFoundation", RTLD_LAZY);

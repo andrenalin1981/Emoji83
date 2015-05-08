@@ -2,6 +2,7 @@
 
 @interface NSMutableAttributedString (Private)
 - (void)fixFontAttributeInRange:(NSRange)range;
+- (void)fixAttributesInRange:(NSRange)range;
 @end
 
 @interface NSRefCountedRunArray : NSObject // ???
