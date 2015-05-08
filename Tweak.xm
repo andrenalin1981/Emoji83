@@ -1121,7 +1121,6 @@ static BOOL emojiToBeFixed(NSString *string)
 		@catch (NSException *exception) {}
 		@finally {
 			BOOL shouldFix = !im || [im intValue] != 0;
-			NSLog(@"%d", shouldFix);
 			if (shouldFix && emojiToBeFixed(str.string))
 				[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
 		}
