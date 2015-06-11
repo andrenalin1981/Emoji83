@@ -3,6 +3,9 @@
 //#import <CoreText/CoreText.h>
 #import <CoreFoundation/CoreFoundation.h>
 
+extern "C" NSString *UIKeyboardGetCurrentInputMode();
+NSString *(*UIKeyboardGetKBStarName)(NSString *, UIKBScreenTraits *, int, int);
+
 /*static unsigned long *_unicodeFromEmoji(NSString *emoji)
 {
 	NSData *data = [emoji dataUsingEncoding:NSUTF32LittleEndianStringEncoding];
@@ -294,8 +297,17 @@ static NSArray *targetKeys()
 			if (inputGeometry && key.state != 16) {
 				CGFloat height = getScrollViewHeight(keyplaneName);
 				CGRect frame = inputGeometry.frame;
+				paddedDeltaPosX = inputGeometry.paddedFrame.origin.x - frame.origin.x;
+				paddedDeltaPosY = inputGeometry.paddedFrame.origin.y - frame.origin.y;
+				paddedDeltaWidth = inputGeometry.paddedFrame.size.width - frame.size.width;
+				paddedDeltaHeight = inputGeometry.paddedFrame.size.height - frame.size.height;
 				correctFrame = CGRectMake(frame.origin.x, height, frame.size.width, height2);
 				inputGeometry.displayFrame = correctFrame;
+				inputGeometry.symbolFrame = correctFrame;
+				inputGeometry.paddedFrame = correctFrame;
+				oldPaddedFrame = inputGeometry.paddedFrame;
+				inputGeometry.paddedFrame = CGRectMake(oldPaddedFrame.origin.x + paddedDeltaPosX, oldPaddedFrame.origin.y + paddedDeltaPosY, oldPaddedFrame.size.width + paddedDeltaWidth, oldPaddedFrame.size.height + paddedDeltaHeight);
+				inputGeometry.frame = correctFrame;
 				traits.geometry = inputGeometry;
 			}
 		}
@@ -325,7 +337,7 @@ static NSArray *targetKeys()
 %hook UIKBKeyView
 
 %new
-- (void)emoji83_positionFixForKeyplane:(UIKBTree *)keyplane key:(UIKBTree *)key withFrame:(CGRect *)beforeFrame
+- (void)emoji83_positionFixForKeyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
 {
 	NSString *keyName = key.name;
 	NSString *keyplaneName = keyplane.name;
@@ -341,27 +353,24 @@ static NSArray *targetKeys()
 			UIKBShape *shape = key.shape;
 			CGRect paddedFrame = shape.paddedFrame;
 			CGRect newPaddedFrame = CGRectMake(paddedFrame.origin.x, height, paddedFrame.size.width, height2);
+			shape.frame = newFrame;
 			shape.paddedFrame = newPaddedFrame;
 			key.shape = shape;
-			self.frame = frame;
-			if (beforeFrame != NULL)
-				*beforeFrame = newFrame;
 		}
 	}
 }
 
 - (id)initWithFrame:(CGRect)frame keyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
 {
-	CGRect frame2 = frame;
-	[self emoji83_positionFixForKeyplane:keyplane key:key withFrame:&frame2];
-	self = %orig(frame2, keyplane, key);
+	[self emoji83_positionFixForKeyplane:keyplane key:key];
+	self = %orig(frame, keyplane, key);
 	return self;
 }
 
 - (void)updateForKeyplane:(UIKBTree *)keyplane key:(UIKBTree *)key
 {
 	%orig;
-	[self emoji83_positionFixForKeyplane:keyplane key:key withFrame:NULL];
+	[self emoji83_positionFixForKeyplane:keyplane key:key];
 }
 
 %end
@@ -651,7 +660,7 @@ static NSMutableArray *_categories;
 			emojiArray = ActivityEmoji;
 			break;
 		case 6:
-			emojiCount = 122; // some extra flags left
+			emojiCount = 122 - 42 + 247; // should cover all
 			emojiArray = TravelAndPlacesEmoji;
 			break;
 		case 7:
@@ -771,15 +780,12 @@ static NSMutableArray *_categories;
 
 %hook UIKeyboardImpl
 
-extern "C" UIKeyboardInputMode *UIKeyboardGetCurrentInputMode();
-NSString *(*UIKeyboardGetKBStarName)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int);
-
 static CGSize hookSize(CGSize size)
 {
 	Class layoutClass = [UIKeyboardImpl layoutClassForCurrentInputMode];
 	if (layoutClass == objc_getClass("UIKeyboardLayoutStar")) {
 		UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:[[[UIKeyboardImpl activeInstance] _layout] orientation]];
-		UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
+		NSString *currentInputMode = UIKeyboardGetCurrentInputMode();
 		NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
 		UIKBTree *tree = [layoutClass keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
 		if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
@@ -819,7 +825,7 @@ static CGSize hookSize(CGSize size)
 	int orientation = [[%c(UIKeyboard) activeKeyboard] interfaceOrientation];
 	UIKBScreenTraits *screenTraits = [%c(UIKBScreenTraits) traitsWithScreen:[UIKeyboardImpl keyboardScreen] orientation:orientation];
 	[screenTraits setOrientationKey:[UIKeyboardImpl orientationKeyForOrientation:orientation]];
-	UIKeyboardInputMode *currentInputMode = UIKeyboardGetCurrentInputMode();
+	NSString *currentInputMode = UIKeyboardGetCurrentInputMode();
 	NSString *name = UIKeyboardGetKBStarName(currentInputMode, screenTraits, 0, 0);
 	UIKBTree *tree = [%c(UIKeyboardLayoutStar) keyboardFromFactoryWithName:name screen:[UIKeyboardImpl keyboardScreen]];
 	if (tree && [name rangeOfString:@"Emoji"].location != NSNotFound) {
@@ -1094,8 +1100,8 @@ static BOOL incompletedLongEmoji(NSString *string)
 static BOOL emojiToBeFixed(NSString *string)
 {
 	BOOL eightPlus = incompletedLongEmoji(string);
-	//BOOL vulcan = [string rangeOfString:[NSString stringWithUnichar:0x1F596]].location != NSNotFound;
-	return eightPlus/* || vulcan*/;
+	BOOL vulcan = [string rangeOfString:[NSString stringWithUnichar:0x1F596]].location != NSNotFound;
+	return eightPlus || vulcan;
 }
 
 %hook NSConcreteMutableAttributedString
@@ -1120,9 +1126,15 @@ static BOOL emojiToBeFixed(NSString *string)
 		}
 		@catch (NSException *exception) {}
 		@finally {
-			BOOL shouldFix = !im || [im intValue] != 0;
-			if (shouldFix && emojiToBeFixed(str.string))
+			BOOL shouldFix = !im || (im && ([im intValue] != 0));
+			if (shouldFix && emojiToBeFixed(str.string)) {
 				[(NSMutableAttributedString *)str fixFontAttributeInRange:NSMakeRange(0, str.length)];
+			}
+			NSString *vulcan = [NSString stringWithUnichar:0x1F596];
+			NSRange vulcanRange = [str.string rangeOfString:vulcan];
+			if ((vulcanRange.location != NSNotFound) && (im && ([im intValue] == 0))) {
+				[(NSMutableAttributedString *)str removeAttribute:@"NSOriginalFont" range:vulcanRange];
+			}
 		}
 	}
 	return %orig(str);
@@ -1327,11 +1339,11 @@ NSString *didShow = @"didShow";
 
 %hook SpringBoard
 
-- (void)applicationDidFinishLaunching:(id)application
+- (void)applicationDidFinishLaunching:(id)arg1
 {
     %orig;
     NSMutableDictionary *prefs = nil;
-    if (![[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.ps.emoji83.list"]) {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/com.ps.emoji83.list"] || [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/io.cydro.emojifont.list"] || [[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/io.cydro.emojifontnew.list"]) {
     	prefs = [[[NSMutableDictionary dictionaryWithContentsOfFile:path83] mutableCopy] autorelease] ?: [NSMutableDictionary dictionary];
     	if (!prefs[didShow]) {
 			UIAlertView *o = [[UIAlertView alloc] initWithTitle:@"Emoji83 [Beta]" message:@"GitHub version of Emoji83 not found." delegate:nil cancelButtonTitle:[NSString stringWithUnichar:0x1F596] otherButtonTitles:nil];
@@ -1371,7 +1383,7 @@ NSString *didShow = @"didShow";
 					%init(SB);
 				}
 				MSImageRef ref = MSGetImageByName("/System/Library/Frameworks/UIKit.framework/UIKit");
-				UIKeyboardGetKBStarName = (NSString *(*)(UIKeyboardInputMode *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
+				UIKeyboardGetKBStarName = (NSString *(*)(NSString *, UIKBScreenTraits *, int, int))MSFindSymbol(ref, "_UIKeyboardGetKBStarName");
 				dlopen("/System/Library/PrivateFrameworks/UIFoundation.framework/UIFoundation", RTLD_LAZY);
 				%init;
 				//NSArray *(*getFlickPopupInfoArray)(id, NSString *) = (NSArray *(*)(id, NSString *))MSFindSymbol(ref, "_getFlickPopupInfoArray");
